@@ -2,3 +2,18 @@ datasets/MIMIC_III
 *.csv
 *.zip
 *.txt
+
+# local python env
+.venv/
+venv/
+
+# python cache
+__pycache__/
+*.py[cod]
+
+# generated outputs/caches
+output/
+results_prompting/
+saved_files/mimic3_samples/*.pkl
+saved_files/mimic4_samples/*.pkl
+saved_files/gpt_code_emb/

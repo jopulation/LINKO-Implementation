@@ -1,4 +1,3 @@
-from preprocessing.MIMIC_preprocessing import preprocessing_seq_diag_pred
 from tasks.diagnosis_prediction import sequential_diagnosis_prediction_mimic3
 from model.LINKO import Mega
 from pyhealth.trainer import Trainer
@@ -13,6 +12,9 @@ from pyhealth.datasets import split_by_patient, get_dataloader
 
 
 def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, record_results=True):
+
+    os.makedirs("output", exist_ok=True)
+    os.makedirs("results_prompting", exist_ok=True)
 
     data = mimic3sample.samples
     co_occurrence_counts, groups1 = get_group_labels1(data)
@@ -55,7 +57,7 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
         print('preprocessing done!')
 
         # Stage 3: define model
-        device = "cuda:0"
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
         if ds_size_ratio==1.0:
             ds_size_ratio_model = ''
@@ -64,7 +66,7 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
 
         model = Mega(
             dataset=mimic3sample,
-            train_dataset = train_ds
+            train_dataset = train_ds,
             feature_keys=["conditions", "drugs", "procedures"],
             label_key="label",
             mode="multilabel",
@@ -72,7 +74,7 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
             G_dropout=0.1,n_G_heads=4,n_G_layers=1,
             threshold3=0.00, threshold2=0.02, threshold1=0.00,
             n_hap_layers=1, n_hap_heads=2, hap_dropout=0.2,
-            llm_model='text-embedding-3-small', gpt_embd_path='../saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/', #gpt_embd_path='../saved_files/gpt_code_emb/tx-emb-3-small/' => so far best results
+            llm_model='text-embedding-3-small', gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/', #gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/' => so far best results
             ds_size_ratio=ds_size_ratio_model,device=device, seed=seed,
         )
         model.to(device)
@@ -308,5 +310,6 @@ mimic3sample = customized_set_task_mimic3(dataset=mimic3_ds,
                                           seed=45)
 print('--datasets created.')
 print(mimic3sample.stat())
-nfold_experiment(mimic3sample, epochs=230, ds_size_ratio=1.0)
+epochs = int(os.getenv("EPOCHS", "230"))
+nfold_experiment(mimic3sample, epochs=epochs, ds_size_ratio=1.0)
 

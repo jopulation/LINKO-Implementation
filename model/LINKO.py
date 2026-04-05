@@ -25,15 +25,19 @@ class Mega(BaseModel):
     def __init__(self, dataset: List[BaseEHRDataset], train_dataset: List[BaseEHRDataset], feature_keys: List[str], label_key: str, mode: str,
                  embedding_dim=128, dropout = 0.5, nheads=1, nlayers=1,
                  G_dropout = 0.5, n_G_heads=1, n_G_layers=1,threshold3=0.00, threshold2=0.02, threshold1=0.12,
-                 llm_model = 'text-embedding-3-small', gpt_embd_path='../saved_files/gpt_code_emb/tx-emb-3-small/',
+                 llm_model = 'text-embedding-3-small', gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/',
                  n_hap_layers=1, n_hap_heads=1, hap_dropout = 0.5,
                  ds_size_ratio='', device='cuda', seed=None, **kwargs):
         super().__init__(dataset, feature_keys, label_key, mode)
+
+        self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.saved_files_root = os.path.join(self.project_root, "saved_files")
 
         torch.manual_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
         self.device1 = device
+        self.device = device
         self.ds_size_ratio = ds_size_ratio
         self.train_dataset = train_dataset
         # Set seed for CUDA operations
@@ -63,10 +67,13 @@ class Mega(BaseModel):
 
         self._ontology_tables()
 
-        #importing/generating conditional_prob_matrix
-        if os.path.isfile(f'../saved_files/conditional_prob_matrix{ds_size_ratio}.csv'):
+        # importing/generating conditional_prob_matrix
+        conditional_prob_l3_path = os.path.join(
+            self.saved_files_root, f"conditional_prob_matrix{ds_size_ratio}.csv"
+        )
+        if os.path.isfile(conditional_prob_l3_path):
             # Load the DataFrame if the file exists
-            self.conditional_prob_matrix_l3 = pd.read_csv(f'../saved_files/conditional_prob_matrix{ds_size_ratio}.csv')
+            self.conditional_prob_matrix_l3 = pd.read_csv(conditional_prob_l3_path)
             self.conditional_prob_matrix_l3.drop(['Unnamed: 0'], axis=1, inplace=True)
             self.conditional_prob_matrix_l3.index = self.conditional_prob_matrix_l3.columns
             print(f"conditional_prob_matrix loaded successfully.")
@@ -76,13 +83,18 @@ class Mega(BaseModel):
             print(f"conditional_prob_matrix generated successfully.")
 
         # importing/generating conditional_prob_matrix for parents
-        if os.path.isfile(f'../saved_files/conditional_prob_matrix1{ds_size_ratio}.csv') and os.path.isfile(
-                '../saved_files/conditional_prob_matrix2{ds_size_ratio}.csv'):
+        conditional_prob_l1_path = os.path.join(
+            self.saved_files_root, f"conditional_prob_matrix1{ds_size_ratio}.csv"
+        )
+        conditional_prob_l2_path = os.path.join(
+            self.saved_files_root, f"conditional_prob_matrix2{ds_size_ratio}.csv"
+        )
+        if os.path.isfile(conditional_prob_l1_path) and os.path.isfile(conditional_prob_l2_path):
             # Load the DataFrame if the file exists
-            self.conditional_prob_matrix_l1 = pd.read_csv(f'../saved_files/conditional_prob_matrix1{ds_size_ratio}.csv')
+            self.conditional_prob_matrix_l1 = pd.read_csv(conditional_prob_l1_path)
             self.conditional_prob_matrix_l1.drop(['Unnamed: 0'], axis=1, inplace=True)
             self.conditional_prob_matrix_l1.index = self.conditional_prob_matrix_l1.columns
-            self.conditional_prob_matrix_l2 = pd.read_csv(f'../saved_files/conditional_prob_matrix2{ds_size_ratio}.csv')
+            self.conditional_prob_matrix_l2 = pd.read_csv(conditional_prob_l2_path)
             self.conditional_prob_matrix_l2.drop(['Unnamed: 0'], axis=1, inplace=True)
             self.conditional_prob_matrix_l2.index = self.conditional_prob_matrix_l2.columns
             print(f"conditional_prob_matrix for parents loaded successfully.")
@@ -94,10 +106,14 @@ class Mega(BaseModel):
 
 
         #llm
-        api_key = "***************************************"
-        self.client = OpenAI(api_key=api_key)
+        api_key = os.getenv("OPENAI_API_KEY")
+        self.client = OpenAI(api_key=api_key) if api_key else None
         self.llm_model = llm_model
-        self.gpt_embd_path = gpt_embd_path
+        self.gpt_embd_path = (
+            gpt_embd_path
+            if os.path.isabs(gpt_embd_path)
+            else os.path.normpath(os.path.join(self.project_root, gpt_embd_path))
+        )
 
         if os.path.isfile(self.gpt_embd_path+ f'dx1_gpt_emb{ds_size_ratio}.npy'):
 
@@ -347,6 +363,8 @@ class Mega(BaseModel):
 
     def _get_gpt_embedding(self, text, model="text-embedding-3-small", dimensions=None):
         # avialable models: "text-embedding-3-large" ,  "text-embedding-3-small", "text-embedding-ada-002"
+        if self.client is None:
+            raise ValueError("OPENAI_API_KEY is not set and no precomputed LLM embeddings were found.")
         return self.client.embeddings.create(input=[text], model=model, dimensions=dimensions).data[0].embedding
 
     def _get_llm_emb(self, codes, code_type, level):
@@ -402,20 +420,22 @@ class Mega(BaseModel):
 
     def creat_llm_emb(self):
 
+        os.makedirs(self.gpt_embd_path, exist_ok=True)
+
         print(f'creating llm embedding, llm_model:{self.llm_model}')
         dx1 = self.dx_table['l1'].unique().tolist()
         dx2 = self.dx_table['l2'].unique().tolist()
         dx3 = self.dx_table['l3'].unique().tolist()
-        dx1_gpt_emb = self._get_llm_emb(codes=dx1, code_type='dx')
+        dx1_gpt_emb = self._get_llm_emb(codes=dx1, code_type='dx', level=1)
         np.save(self.gpt_embd_path + f'dx1_gpt_emb{self.ds_size_ratio}.npy', dx1_gpt_emb)
         self.dx1_gpt_emb = torch.tensor(dx1_gpt_emb, dtype=torch.float64).to(self.device)
 
 
-        dx2_gpt_emb = self._get_llm_emb(codes=dx2, code_type='dx')
+        dx2_gpt_emb = self._get_llm_emb(codes=dx2, code_type='dx', level=2)
         np.save(self.gpt_embd_path + f'dx2_gpt_emb{self.ds_size_ratio}.npy', dx2_gpt_emb)
         self.dx2_gpt_emb = torch.tensor(dx2_gpt_emb, dtype=torch.float64).to(self.device)
 
-        dx3_gpt_emb = self._get_llm_emb(codes=dx3, code_type='dx')
+        dx3_gpt_emb = self._get_llm_emb(codes=dx3, code_type='dx', level=3)
         np.save(self.gpt_embd_path + f'dx3_gpt_emb{self.ds_size_ratio}.npy', dx3_gpt_emb)
         self.dx3_gpt_emb = torch.tensor(dx3_gpt_emb, dtype=torch.float64).to(self.device)
 
@@ -423,15 +443,15 @@ class Mega(BaseModel):
         rx2 = self.rx_table['l2'].unique().tolist()
         rx3 = self.rx_table['l3'].unique().tolist()
 
-        rx1_gpt_emb = self._get_llm_emb(codes=rx1, code_type='rx')
+        rx1_gpt_emb = self._get_llm_emb(codes=rx1, code_type='rx', level=1)
         np.save(self.gpt_embd_path + f'rx1_gpt_emb{self.ds_size_ratio}.npy', rx1_gpt_emb)
         self.rx1_gpt_emb = torch.tensor(rx1_gpt_emb, dtype=torch.float64).to(self.device)
 
-        rx2_gpt_emb = self._get_llm_emb(codes=rx2, code_type='rx')
+        rx2_gpt_emb = self._get_llm_emb(codes=rx2, code_type='rx', level=2)
         np.save(self.gpt_embd_path + f'rx2_gpt_emb{self.ds_size_ratio}.npy', rx2_gpt_emb)
         self.rx2_gpt_emb = torch.tensor(rx2_gpt_emb, dtype=torch.float64).to(self.device)
 
-        rx3_gpt_emb = self._get_llm_emb(codes=rx3, code_type='rx')
+        rx3_gpt_emb = self._get_llm_emb(codes=rx3, code_type='rx', level=3)
         np.save(self.gpt_embd_path + f'rx3_gpt_emb{self.ds_size_ratio}.npy', rx3_gpt_emb)
         self.rx3_gpt_emb = torch.tensor(rx3_gpt_emb, dtype=torch.float64).to(self.device)
 
@@ -439,15 +459,15 @@ class Mega(BaseModel):
         px2 = self.px_table['l2'].unique().tolist()
         px3 = self.px_table['l3'].unique().tolist()
 
-        px1_gpt_emb = self._get_llm_emb(codes=px1, code_type='px')
+        px1_gpt_emb = self._get_llm_emb(codes=px1, code_type='px', level=1)
         np.save(self.gpt_embd_path+ f'px1_gpt_emb{self.ds_size_ratio}.npy', px1_gpt_emb)
         self.px1_gpt_emb = torch.tensor(px1_gpt_emb, dtype=torch.float64).to(self.device)
 
-        px2_gpt_emb = self._get_llm_emb(codes=px2, code_type='px')
+        px2_gpt_emb = self._get_llm_emb(codes=px2, code_type='px', level=2)
         np.save(self.gpt_embd_path+ f'px2_gpt_emb{self.ds_size_ratio}.npy', px2_gpt_emb)
         self.px2_gpt_emb = torch.tensor(px2_gpt_emb, dtype=torch.float64).to(self.device)
 
-        px3_gpt_emb = self._get_llm_emb(codes=px3, code_type='px')
+        px3_gpt_emb = self._get_llm_emb(codes=px3, code_type='px', level=3)
         np.save(self.gpt_embd_path+ f'px3_gpt_emb{self.ds_size_ratio}.npy', px3_gpt_emb)
         self.px3_gpt_emb = torch.tensor(px3_gpt_emb, dtype=torch.float64).to(self.device)
 
@@ -504,7 +524,9 @@ class Mega(BaseModel):
         conditional_prob_matrix_reordered = conditional_prob_matrix.reindex(index=codes_sorted, columns=codes_sorted)
 
         #conditional_prob_matrix for level3
-        conditional_prob_matrix_reordered.to_csv(f'../saved_files/conditional_prob_matrix{self.ds_size_ratio}.csv')
+        conditional_prob_matrix_reordered.to_csv(
+            os.path.join(self.saved_files_root, f'conditional_prob_matrix{self.ds_size_ratio}.csv')
+        )
 
         self.conditional_prob_matrix_l3 = conditional_prob_matrix_reordered
 
@@ -568,8 +590,12 @@ class Mega(BaseModel):
                     conditional_prob_matrix2.at[code1, code2] = co_occurrence_matrix_l2.at[code1, code2] / total_counts2[code1]
 
 
-        conditional_prob_matrix1.to_csv(f'../saved_files/conditional_prob_matrix1{self.ds_size_ratio}.csv')
-        conditional_prob_matrix2.to_csv(f'../saved_files/conditional_prob_matrix2{self.ds_size_ratio}.csv')
+        conditional_prob_matrix1.to_csv(
+            os.path.join(self.saved_files_root, f'conditional_prob_matrix1{self.ds_size_ratio}.csv')
+        )
+        conditional_prob_matrix2.to_csv(
+            os.path.join(self.saved_files_root, f'conditional_prob_matrix2{self.ds_size_ratio}.csv')
+        )
 
         self.conditional_prob_matrix_l1 = conditional_prob_matrix1
         self.conditional_prob_matrix_l2 = conditional_prob_matrix2

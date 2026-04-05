@@ -9,6 +9,12 @@ from collections.abc import Iterable
 from typing import Union
 import pandas as pd
 from pyhealth.medcode import InnerMap, CrossMap
+
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SAVED_FILES_DIR = os.path.join(PROJECT_ROOT, "saved_files")
+
+
 class ICD10toICD9():
     """
     Maps icd10 codes to icd9.
@@ -20,12 +26,12 @@ class ICD10toICD9():
 
         if dx:
             #self.filename = "../saved_files/icd_maping/icd10cmtoicd9gem.csv"
-            self.filename = '../saved_files/icd_maping/2018_I10gem.txt'
+            self.filename = os.path.join(SAVED_FILES_DIR, 'icd_maping', '2018_I10gem.txt')
             self.df = pd.read_csv(self.filename)
             self.df = pd.read_csv(self.filename, delim_whitespace=True, header=None)
             self.df.columns = ['icd10cm', 'icd9cm', 'flag']
         else:
-            self.filename = '../saved_files/icd_maping/gem_pcsi9.txt'
+            self.filename = os.path.join(SAVED_FILES_DIR, 'icd_maping', 'gem_pcsi9.txt')
             self.df = pd.read_csv(self.filename, delim_whitespace=True, header=None)
             self.df.columns = ['icd10cm', 'icd9cm', 'flag']
 
@@ -471,8 +477,11 @@ def customized_set_task_mimic3(
         path = ''
     path = path + f'_{ds_size_ratio}'
 
-    if os.path.isfile(f'../saved_files/mimic3_samples/samples{path}.pkl'):
-        with open(f'../saved_files/mimic3_samples/samples{path}.pkl', 'rb') as f:
+    mimic3_samples_dir = os.path.join(SAVED_FILES_DIR, 'mimic3_samples')
+    os.makedirs(mimic3_samples_dir, exist_ok=True)
+
+    if os.path.isfile(os.path.join(mimic3_samples_dir, f'samples{path}.pkl')):
+        with open(os.path.join(mimic3_samples_dir, f'samples{path}.pkl'), 'rb') as f:
             final_samples = pickle.load(f)
         print('--- samples loaded!')
 
@@ -501,9 +510,9 @@ def customized_set_task_mimic3(
             final_samples = samples
             final_samples_ccs = ccs_samples
 
-        with open(f'../saved_files/mimic3_samples/samples_{ds_size_ratio}.pkl', 'wb') as f:
+        with open(os.path.join(mimic3_samples_dir, f'samples_{ds_size_ratio}.pkl'), 'wb') as f:
             pickle.dump(final_samples, f)
-        with open(f'../saved_files/mimic3_samples/samples_ccs_{ds_size_ratio}.pkl', 'wb') as f:
+        with open(os.path.join(mimic3_samples_dir, f'samples_ccs_{ds_size_ratio}.pkl'), 'wb') as f:
             pickle.dump(final_samples_ccs, f)
 
 
