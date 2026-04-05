@@ -37,8 +37,8 @@ class Mega(BaseModel):
         np.random.seed(seed)
         random.seed(seed)
         self.device1 = device
-        self.device = device
         self.ds_size_ratio = ds_size_ratio
+        self.seed = seed
         self.train_dataset = train_dataset
         # Set seed for CUDA operations
         if torch.cuda.is_available():
@@ -130,7 +130,11 @@ class Mega(BaseModel):
             self.px3_gpt_emb = torch.tensor(np.load(self.gpt_embd_path + f'px3_gpt_emb{ds_size_ratio}.npy'), dtype=torch.float32)
 
         else:
-            self.creat_llm_emb()
+            try:
+                self.creat_llm_emb()
+            except Exception as e:
+                print(f"LLM embedding generation failed ({e}). Falling back to random local embeddings.")
+                self.create_random_llm_emb()
 
 
         #print(self.embeddings1['conditions'].weight[:2].device)
@@ -428,16 +432,16 @@ class Mega(BaseModel):
         dx3 = self.dx_table['l3'].unique().tolist()
         dx1_gpt_emb = self._get_llm_emb(codes=dx1, code_type='dx', level=1)
         np.save(self.gpt_embd_path + f'dx1_gpt_emb{self.ds_size_ratio}.npy', dx1_gpt_emb)
-        self.dx1_gpt_emb = torch.tensor(dx1_gpt_emb, dtype=torch.float64).to(self.device)
+        self.dx1_gpt_emb = torch.tensor(dx1_gpt_emb, dtype=torch.float64).to(self.device1)
 
 
         dx2_gpt_emb = self._get_llm_emb(codes=dx2, code_type='dx', level=2)
         np.save(self.gpt_embd_path + f'dx2_gpt_emb{self.ds_size_ratio}.npy', dx2_gpt_emb)
-        self.dx2_gpt_emb = torch.tensor(dx2_gpt_emb, dtype=torch.float64).to(self.device)
+        self.dx2_gpt_emb = torch.tensor(dx2_gpt_emb, dtype=torch.float64).to(self.device1)
 
         dx3_gpt_emb = self._get_llm_emb(codes=dx3, code_type='dx', level=3)
         np.save(self.gpt_embd_path + f'dx3_gpt_emb{self.ds_size_ratio}.npy', dx3_gpt_emb)
-        self.dx3_gpt_emb = torch.tensor(dx3_gpt_emb, dtype=torch.float64).to(self.device)
+        self.dx3_gpt_emb = torch.tensor(dx3_gpt_emb, dtype=torch.float64).to(self.device1)
 
         rx1 = self.rx_table['l1'].unique().tolist()
         rx2 = self.rx_table['l2'].unique().tolist()
@@ -445,15 +449,15 @@ class Mega(BaseModel):
 
         rx1_gpt_emb = self._get_llm_emb(codes=rx1, code_type='rx', level=1)
         np.save(self.gpt_embd_path + f'rx1_gpt_emb{self.ds_size_ratio}.npy', rx1_gpt_emb)
-        self.rx1_gpt_emb = torch.tensor(rx1_gpt_emb, dtype=torch.float64).to(self.device)
+        self.rx1_gpt_emb = torch.tensor(rx1_gpt_emb, dtype=torch.float64).to(self.device1)
 
         rx2_gpt_emb = self._get_llm_emb(codes=rx2, code_type='rx', level=2)
         np.save(self.gpt_embd_path + f'rx2_gpt_emb{self.ds_size_ratio}.npy', rx2_gpt_emb)
-        self.rx2_gpt_emb = torch.tensor(rx2_gpt_emb, dtype=torch.float64).to(self.device)
+        self.rx2_gpt_emb = torch.tensor(rx2_gpt_emb, dtype=torch.float64).to(self.device1)
 
         rx3_gpt_emb = self._get_llm_emb(codes=rx3, code_type='rx', level=3)
         np.save(self.gpt_embd_path + f'rx3_gpt_emb{self.ds_size_ratio}.npy', rx3_gpt_emb)
-        self.rx3_gpt_emb = torch.tensor(rx3_gpt_emb, dtype=torch.float64).to(self.device)
+        self.rx3_gpt_emb = torch.tensor(rx3_gpt_emb, dtype=torch.float64).to(self.device1)
 
         px1 = self.px_table['l1'].unique().tolist()
         px2 = self.px_table['l2'].unique().tolist()
@@ -461,22 +465,78 @@ class Mega(BaseModel):
 
         px1_gpt_emb = self._get_llm_emb(codes=px1, code_type='px', level=1)
         np.save(self.gpt_embd_path+ f'px1_gpt_emb{self.ds_size_ratio}.npy', px1_gpt_emb)
-        self.px1_gpt_emb = torch.tensor(px1_gpt_emb, dtype=torch.float64).to(self.device)
+        self.px1_gpt_emb = torch.tensor(px1_gpt_emb, dtype=torch.float64).to(self.device1)
 
         px2_gpt_emb = self._get_llm_emb(codes=px2, code_type='px', level=2)
         np.save(self.gpt_embd_path+ f'px2_gpt_emb{self.ds_size_ratio}.npy', px2_gpt_emb)
-        self.px2_gpt_emb = torch.tensor(px2_gpt_emb, dtype=torch.float64).to(self.device)
+        self.px2_gpt_emb = torch.tensor(px2_gpt_emb, dtype=torch.float64).to(self.device1)
 
         px3_gpt_emb = self._get_llm_emb(codes=px3, code_type='px', level=3)
         np.save(self.gpt_embd_path+ f'px3_gpt_emb{self.ds_size_ratio}.npy', px3_gpt_emb)
-        self.px3_gpt_emb = torch.tensor(px3_gpt_emb, dtype=torch.float64).to(self.device)
+        self.px3_gpt_emb = torch.tensor(px3_gpt_emb, dtype=torch.float64).to(self.device1)
 
         return
+
+    def create_random_llm_emb(self):
+        os.makedirs(self.gpt_embd_path, exist_ok=True)
+
+        rng = np.random.default_rng(self.seed)
+
+        dx1 = self.dx_table['l1'].unique().tolist()
+        dx2 = self.dx_table['l2'].unique().tolist()
+        dx3 = self.dx_table['l3'].unique().tolist()
+        rx1 = self.rx_table['l1'].unique().tolist()
+        rx2 = self.rx_table['l2'].unique().tolist()
+        rx3 = self.rx_table['l3'].unique().tolist()
+        px1 = self.px_table['l1'].unique().tolist()
+        px2 = self.px_table['l2'].unique().tolist()
+        px3 = self.px_table['l3'].unique().tolist()
+
+        dx1_gpt_emb = rng.standard_normal((len(dx1), self.embedding_dim), dtype=np.float32)
+        dx2_gpt_emb = rng.standard_normal((len(dx2), self.embedding_dim), dtype=np.float32)
+        dx3_gpt_emb = rng.standard_normal((len(dx3), self.embedding_dim), dtype=np.float32)
+
+        rx1_gpt_emb = rng.standard_normal((len(rx1), self.embedding_dim), dtype=np.float32)
+        rx2_gpt_emb = rng.standard_normal((len(rx2), self.embedding_dim), dtype=np.float32)
+        rx3_gpt_emb = rng.standard_normal((len(rx3), self.embedding_dim), dtype=np.float32)
+
+        px1_gpt_emb = rng.standard_normal((len(px1), self.embedding_dim), dtype=np.float32)
+        px2_gpt_emb = rng.standard_normal((len(px2), self.embedding_dim), dtype=np.float32)
+        px3_gpt_emb = rng.standard_normal((len(px3), self.embedding_dim), dtype=np.float32)
+
+        np.save(self.gpt_embd_path + f'dx1_gpt_emb{self.ds_size_ratio}.npy', dx1_gpt_emb)
+        np.save(self.gpt_embd_path + f'dx2_gpt_emb{self.ds_size_ratio}.npy', dx2_gpt_emb)
+        np.save(self.gpt_embd_path + f'dx3_gpt_emb{self.ds_size_ratio}.npy', dx3_gpt_emb)
+
+        np.save(self.gpt_embd_path + f'rx1_gpt_emb{self.ds_size_ratio}.npy', rx1_gpt_emb)
+        np.save(self.gpt_embd_path + f'rx2_gpt_emb{self.ds_size_ratio}.npy', rx2_gpt_emb)
+        np.save(self.gpt_embd_path + f'rx3_gpt_emb{self.ds_size_ratio}.npy', rx3_gpt_emb)
+
+        np.save(self.gpt_embd_path + f'px1_gpt_emb{self.ds_size_ratio}.npy', px1_gpt_emb)
+        np.save(self.gpt_embd_path + f'px2_gpt_emb{self.ds_size_ratio}.npy', px2_gpt_emb)
+        np.save(self.gpt_embd_path + f'px3_gpt_emb{self.ds_size_ratio}.npy', px3_gpt_emb)
+
+        self.dx1_gpt_emb = torch.tensor(dx1_gpt_emb, dtype=torch.float32).to(self.device1)
+        self.dx2_gpt_emb = torch.tensor(dx2_gpt_emb, dtype=torch.float32).to(self.device1)
+        self.dx3_gpt_emb = torch.tensor(dx3_gpt_emb, dtype=torch.float32).to(self.device1)
+
+        self.rx1_gpt_emb = torch.tensor(rx1_gpt_emb, dtype=torch.float32).to(self.device1)
+        self.rx2_gpt_emb = torch.tensor(rx2_gpt_emb, dtype=torch.float32).to(self.device1)
+        self.rx3_gpt_emb = torch.tensor(rx3_gpt_emb, dtype=torch.float32).to(self.device1)
+
+        self.px1_gpt_emb = torch.tensor(px1_gpt_emb, dtype=torch.float32).to(self.device1)
+        self.px2_gpt_emb = torch.tensor(px2_gpt_emb, dtype=torch.float32).to(self.device1)
+        self.px3_gpt_emb = torch.tensor(px3_gpt_emb, dtype=torch.float32).to(self.device1)
 
 
     def get_co_occurrence(self):
 
-        data = self.train_dataset.samples
+        if hasattr(self.train_dataset, "samples"):
+            data = self.train_dataset.samples
+        elif hasattr(self.train_dataset, "indices") and hasattr(self.train_dataset, "dataset") and hasattr(self.train_dataset.dataset, "samples"):
+            data = [self.train_dataset.dataset.samples[i] for i in self.train_dataset.indices]
+        else:
+            raise ValueError("Unsupported train_dataset type for co-occurrence computation.")
 
         # Flatten the data into a DataFrame
         rows = []
@@ -889,7 +949,7 @@ class Mega(BaseModel):
             )
 
             # (patient, visit, event)
-            input = torch.tensor(input, dtype=torch.long, device=self.device)
+            input = torch.tensor(input, dtype=torch.long, device=self.device1)
 
             # (patient, visit, event, embedding_dim)
             new_embeddings = self.Onto_GAT()

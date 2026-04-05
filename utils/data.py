@@ -329,6 +329,14 @@ def select_random_subset(original_list, ratio=0.5, seed=None):
     return random_subset
 
 
+def _ensure_visit_index_list(samples):
+    for sample in samples:
+        if 'visit_index_list' not in sample:
+            n_visits = len(sample.get('conditions', []))
+            sample['visit_index_list'] = [[i] for i in range(n_visits)]
+    return samples
+
+
 
 def customized_set_task_mimic4(
     dataset,
@@ -483,6 +491,7 @@ def customized_set_task_mimic3(
     if os.path.isfile(os.path.join(mimic3_samples_dir, f'samples{path}.pkl')):
         with open(os.path.join(mimic3_samples_dir, f'samples{path}.pkl'), 'rb') as f:
             final_samples = pickle.load(f)
+        final_samples = _ensure_visit_index_list(final_samples)
         print('--- samples loaded!')
 
         sample_dataset = SampleEHRDataset(

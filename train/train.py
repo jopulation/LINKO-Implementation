@@ -20,6 +20,8 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
     co_occurrence_counts, groups1 = get_group_labels1(data)
 
     seeds = [123, 321, 54, 65, 367]
+    if os.getenv("SMOKE_SEEDS", "0") == "1":
+        seeds = seeds[:1]
 
 
     list_top_k = [3,5,7,10, 15, 20, 30]
@@ -93,7 +95,7 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
                           metrics = ['roc_auc_samples', 'pr_auc_samples', 'f1_samples'],
                           enable_logging=True,
                           output_path=f"./output/OntoFAR_{ds_size_ratio}",
-                          exp_name=f'EXP_:seed:{seed}',
+                          exp_name=f'EXP_seed_{seed}',
                           device=device)
 
         trainer.train(
@@ -301,6 +303,7 @@ mimic3_ds = MIMIC3Dataset(
     # map all NDC codes to ATC 3-rd level codes in these tables
     code_mapping={
         "NDC": ("ATC", {"target_kwargs": {"level": 4}})},
+    dev=os.getenv("MIMIC_DEV", "0") == "1",
 )
 print('--mimic-III loaded.')
 mimic3sample = customized_set_task_mimic3(dataset=mimic3_ds,

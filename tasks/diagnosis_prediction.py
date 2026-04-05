@@ -67,6 +67,7 @@ def sequential_diagnosis_prediction_mimic3(patient, ccs_mapping) -> Tuple[List[D
         hist = visits[:t]
         target_visit = visits[t]
 
+        hist_visit_ids = [v["visit_id"] for v in hist]
         hist_conditions = [v["conditions"] for v in hist]
         hist_procedures = [v["procedures"] for v in hist]
         hist_drugs = [v["drugs"] for v in hist]
@@ -81,6 +82,7 @@ def sequential_diagnosis_prediction_mimic3(patient, ccs_mapping) -> Tuple[List[D
                 "conditions": hist_conditions,
                 "procedures": hist_procedures,
                 "drugs": hist_drugs,
+                "visit_index_list": [[v] for v in hist_visit_ids],
                 "label": target_icd9,
             }
         )
@@ -92,6 +94,7 @@ def sequential_diagnosis_prediction_mimic3(patient, ccs_mapping) -> Tuple[List[D
                 "conditions": hist_conditions,
                 "procedures": hist_procedures,
                 "drugs": hist_drugs,
+                "visit_index_list": [[v] for v in hist_visit_ids],
                 "label": target_ccs,
             }
         )
