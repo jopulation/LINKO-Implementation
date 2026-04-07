@@ -118,7 +118,10 @@ class Mega(BaseModel):
         def emb_path(name: str) -> str:
             return os.path.join(self.gpt_embd_path, f'{name}_gpt_emb{ds_size_ratio}.npy')
 
-        if os.path.isfile(emb_path('dx1')):
+        embedding_names = ['dx1', 'dx2', 'dx3', 'rx1', 'rx2', 'rx3', 'px1', 'px2', 'px3']
+        embedding_paths = [emb_path(name) for name in embedding_names]
+
+        if all(os.path.isfile(path) for path in embedding_paths):
 
             self.dx1_gpt_emb = torch.tensor(np.load(emb_path('dx1')), dtype=torch.float32)
             self.dx2_gpt_emb = torch.tensor(np.load(emb_path('dx2')), dtype=torch.float32)
@@ -419,6 +422,9 @@ class Mega(BaseModel):
         if dimensions is None:
             dimensions = self.embedding_dim
 
+        if os.getenv("LINKO_SKIP_OLLAMA", "0") == "1":
+            return self._text_to_vector(text, dimensions)
+
         prompt = (
             "You are a medical coding expert. Rewrite the following code description into "
             "one concise factual sentence, preserving the medical meaning exactly.\n\n"
@@ -481,7 +487,7 @@ class Mega(BaseModel):
             gpt_code_emb = self._get_gpt_embedding(text, model=self.llm_model, dimensions=self.embedding_dim)
             gpt_code_emb_lst.append(gpt_code_emb)
 
-        return np.array(gpt_code_emb_lst)
+        return np.array(gpt_code_emb_lst, dtype=np.float32)
 
     def creat_llm_emb(self):
 
@@ -496,16 +502,16 @@ class Mega(BaseModel):
         dx3 = self.dx_table['l3'].unique().tolist()
         dx1_gpt_emb = self._get_llm_emb(codes=dx1, code_type='dx', level=1)
         save_emb('dx1', dx1_gpt_emb)
-        self.dx1_gpt_emb = torch.tensor(dx1_gpt_emb, dtype=torch.float64).to(self.device1)
+        self.dx1_gpt_emb = torch.tensor(dx1_gpt_emb, dtype=torch.float32).to(self.device1)
 
 
         dx2_gpt_emb = self._get_llm_emb(codes=dx2, code_type='dx', level=2)
         save_emb('dx2', dx2_gpt_emb)
-        self.dx2_gpt_emb = torch.tensor(dx2_gpt_emb, dtype=torch.float64).to(self.device1)
+        self.dx2_gpt_emb = torch.tensor(dx2_gpt_emb, dtype=torch.float32).to(self.device1)
 
         dx3_gpt_emb = self._get_llm_emb(codes=dx3, code_type='dx', level=3)
         save_emb('dx3', dx3_gpt_emb)
-        self.dx3_gpt_emb = torch.tensor(dx3_gpt_emb, dtype=torch.float64).to(self.device1)
+        self.dx3_gpt_emb = torch.tensor(dx3_gpt_emb, dtype=torch.float32).to(self.device1)
 
         rx1 = self.rx_table['l1'].unique().tolist()
         rx2 = self.rx_table['l2'].unique().tolist()
@@ -513,15 +519,15 @@ class Mega(BaseModel):
 
         rx1_gpt_emb = self._get_llm_emb(codes=rx1, code_type='rx', level=1)
         save_emb('rx1', rx1_gpt_emb)
-        self.rx1_gpt_emb = torch.tensor(rx1_gpt_emb, dtype=torch.float64).to(self.device1)
+        self.rx1_gpt_emb = torch.tensor(rx1_gpt_emb, dtype=torch.float32).to(self.device1)
 
         rx2_gpt_emb = self._get_llm_emb(codes=rx2, code_type='rx', level=2)
         save_emb('rx2', rx2_gpt_emb)
-        self.rx2_gpt_emb = torch.tensor(rx2_gpt_emb, dtype=torch.float64).to(self.device1)
+        self.rx2_gpt_emb = torch.tensor(rx2_gpt_emb, dtype=torch.float32).to(self.device1)
 
         rx3_gpt_emb = self._get_llm_emb(codes=rx3, code_type='rx', level=3)
         save_emb('rx3', rx3_gpt_emb)
-        self.rx3_gpt_emb = torch.tensor(rx3_gpt_emb, dtype=torch.float64).to(self.device1)
+        self.rx3_gpt_emb = torch.tensor(rx3_gpt_emb, dtype=torch.float32).to(self.device1)
 
         px1 = self.px_table['l1'].unique().tolist()
         px2 = self.px_table['l2'].unique().tolist()
@@ -529,15 +535,15 @@ class Mega(BaseModel):
 
         px1_gpt_emb = self._get_llm_emb(codes=px1, code_type='px', level=1)
         save_emb('px1', px1_gpt_emb)
-        self.px1_gpt_emb = torch.tensor(px1_gpt_emb, dtype=torch.float64).to(self.device1)
+        self.px1_gpt_emb = torch.tensor(px1_gpt_emb, dtype=torch.float32).to(self.device1)
 
         px2_gpt_emb = self._get_llm_emb(codes=px2, code_type='px', level=2)
         save_emb('px2', px2_gpt_emb)
-        self.px2_gpt_emb = torch.tensor(px2_gpt_emb, dtype=torch.float64).to(self.device1)
+        self.px2_gpt_emb = torch.tensor(px2_gpt_emb, dtype=torch.float32).to(self.device1)
 
         px3_gpt_emb = self._get_llm_emb(codes=px3, code_type='px', level=3)
         save_emb('px3', px3_gpt_emb)
-        self.px3_gpt_emb = torch.tensor(px3_gpt_emb, dtype=torch.float64).to(self.device1)
+        self.px3_gpt_emb = torch.tensor(px3_gpt_emb, dtype=torch.float32).to(self.device1)
 
         return
 

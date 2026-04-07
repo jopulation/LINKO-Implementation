@@ -2,6 +2,7 @@ datasets/MIMIC_III
 *.csv
 *.zip
 *.txt
+!requirements.txt
 
 # local python env
 .venv/
@@ -17,3 +18,14 @@ results_prompting/
 saved_files/mimic3_samples/*.pkl
 saved_files/mimic4_samples/*.pkl
 saved_files/gpt_code_emb/
+
+# reproducibility bundles for quick run on fresh venv
+!saved_files/gpt_code_emb/
+!saved_files/gpt_code_emb/tx-emb-3-small/
+!saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/
+!saved_files/mimic3_samples/samples_1.0.pkl
+!saved_files/mimic3_samples/samples_ccs_1.0.pkl
+!saved_files/conditional_prob_matrix.csv
+!saved_files/conditional_prob_matrix1.csv
+!saved_files/conditional_prob_matrix2.csv
+!saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/*.npy
