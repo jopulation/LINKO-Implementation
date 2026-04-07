@@ -76,7 +76,7 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
             G_dropout=0.1,n_G_heads=4,n_G_layers=1,
             threshold3=0.00, threshold2=0.02, threshold1=0.00,
             n_hap_layers=1, n_hap_heads=2, hap_dropout=0.2,
-            llm_model='text-embedding-3-small', gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/', #gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/' => so far best results
+            llm_model='llama3.1:latest', gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/', #gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/' => so far best results
             ds_size_ratio=ds_size_ratio_model,device=device, seed=seed,
         )
         model.to(device)

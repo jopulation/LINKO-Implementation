@@ -12,11 +12,14 @@ import numpy as np
 from collections import Counter
 from tqdm import tqdm
 import os
+import json
+import hashlib
+import re
+import urllib.request
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GATConv, HypergraphConv
-from openai import OpenAI
 import random
 
 
@@ -25,7 +28,7 @@ class Mega(BaseModel):
     def __init__(self, dataset: List[BaseEHRDataset], train_dataset: List[BaseEHRDataset], feature_keys: List[str], label_key: str, mode: str,
                  embedding_dim=128, dropout = 0.5, nheads=1, nlayers=1,
                  G_dropout = 0.5, n_G_heads=1, n_G_layers=1,threshold3=0.00, threshold2=0.02, threshold1=0.12,
-                 llm_model = 'text-embedding-3-small', gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/',
+                 llm_model = 'llama3.1:latest', gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/',
                  n_hap_layers=1, n_hap_heads=1, hap_dropout = 0.5,
                  ds_size_ratio='', device='cuda', seed=None, **kwargs):
         super().__init__(dataset, feature_keys, label_key, mode)
@@ -103,31 +106,31 @@ class Mega(BaseModel):
             self.get_co_occurrence_for_parents()
             print(f"conditional_prob_matrix for parents generated successfully.")
 
-
-
-        #llm
-        api_key = os.getenv("OPENAI_API_KEY")
-        self.client = OpenAI(api_key=api_key) if api_key else None
+        # llm
         self.llm_model = llm_model
+        self.ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
         self.gpt_embd_path = (
             gpt_embd_path
             if os.path.isabs(gpt_embd_path)
             else os.path.normpath(os.path.join(self.project_root, gpt_embd_path))
         )
 
-        if os.path.isfile(self.gpt_embd_path+ f'dx1_gpt_emb{ds_size_ratio}.npy'):
+        def emb_path(name: str) -> str:
+            return os.path.join(self.gpt_embd_path, f'{name}_gpt_emb{ds_size_ratio}.npy')
 
-            self.dx1_gpt_emb = torch.tensor(np.load(self.gpt_embd_path + f'dx1_gpt_emb{ds_size_ratio}.npy'), dtype=torch.float32)
-            self.dx2_gpt_emb = torch.tensor(np.load(self.gpt_embd_path + f'dx2_gpt_emb{ds_size_ratio}.npy'), dtype=torch.float32)
-            self.dx3_gpt_emb = torch.tensor(np.load(self.gpt_embd_path + f'dx3_gpt_emb{ds_size_ratio}.npy'), dtype=torch.float32)
+        if os.path.isfile(emb_path('dx1')):
 
-            self.rx1_gpt_emb = torch.tensor(np.load(self.gpt_embd_path + f'rx1_gpt_emb{ds_size_ratio}.npy'), dtype=torch.float32)
-            self.rx2_gpt_emb = torch.tensor(np.load(self.gpt_embd_path + f'rx2_gpt_emb{ds_size_ratio}.npy'), dtype=torch.float32)
-            self.rx3_gpt_emb = torch.tensor(np.load(self.gpt_embd_path + f'rx3_gpt_emb{ds_size_ratio}.npy'), dtype=torch.float32)
+            self.dx1_gpt_emb = torch.tensor(np.load(emb_path('dx1')), dtype=torch.float32)
+            self.dx2_gpt_emb = torch.tensor(np.load(emb_path('dx2')), dtype=torch.float32)
+            self.dx3_gpt_emb = torch.tensor(np.load(emb_path('dx3')), dtype=torch.float32)
 
-            self.px1_gpt_emb = torch.tensor(np.load(self.gpt_embd_path + f'px1_gpt_emb{ds_size_ratio}.npy'), dtype=torch.float32)
-            self.px2_gpt_emb = torch.tensor(np.load(self.gpt_embd_path + f'px2_gpt_emb{ds_size_ratio}.npy'), dtype=torch.float32)
-            self.px3_gpt_emb = torch.tensor(np.load(self.gpt_embd_path + f'px3_gpt_emb{ds_size_ratio}.npy'), dtype=torch.float32)
+            self.rx1_gpt_emb = torch.tensor(np.load(emb_path('rx1')), dtype=torch.float32)
+            self.rx2_gpt_emb = torch.tensor(np.load(emb_path('rx2')), dtype=torch.float32)
+            self.rx3_gpt_emb = torch.tensor(np.load(emb_path('rx3')), dtype=torch.float32)
+
+            self.px1_gpt_emb = torch.tensor(np.load(emb_path('px1')), dtype=torch.float32)
+            self.px2_gpt_emb = torch.tensor(np.load(emb_path('px2')), dtype=torch.float32)
+            self.px3_gpt_emb = torch.tensor(np.load(emb_path('px3')), dtype=torch.float32)
 
         else:
             try:
@@ -365,11 +368,69 @@ class Mega(BaseModel):
         else:
             raise ValueError("Unsupported feature type: {}".format(info["type"]))
 
-    def _get_gpt_embedding(self, text, model="text-embedding-3-small", dimensions=None):
-        # avialable models: "text-embedding-3-large" ,  "text-embedding-3-small", "text-embedding-ada-002"
-        if self.client is None:
-            raise ValueError("OPENAI_API_KEY is not set and no precomputed LLM embeddings were found.")
-        return self.client.embeddings.create(input=[text], model=model, dimensions=dimensions).data[0].embedding
+    def _fit_embedding_dim(self, embedding: List[float], dimensions: int) -> List[float]:
+        if len(embedding) == dimensions:
+            return embedding
+        if len(embedding) > dimensions:
+            return embedding[:dimensions]
+        return embedding + [0.0] * (dimensions - len(embedding))
+
+    def _text_to_vector(self, text: str, dimensions: int) -> List[float]:
+        vector = np.zeros(dimensions, dtype=np.float32)
+        tokens = re.findall(r"[A-Za-z0-9]+", text.lower())
+        for token in tokens:
+            digest = hashlib.md5(token.encode("utf-8")).digest()
+            index = int.from_bytes(digest[:4], "little") % dimensions
+            sign = 1.0 if digest[4] % 2 == 0 else -1.0
+            vector[index] += sign
+
+        norm = float(np.linalg.norm(vector))
+        if norm > 0:
+            vector /= norm
+        return vector.astype(np.float32).tolist()
+
+    def _ollama_generate(self, prompt: str, model: str) -> str:
+        payload = json.dumps(
+            {
+                "model": model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {"temperature": 0, "seed": self.seed},
+            }
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            f"{self.ollama_base_url}/api/generate",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+
+        response = result.get("response", "")
+        if not response:
+            raise ValueError("Ollama generate response was empty.")
+        return response
+
+    def _get_gpt_embedding(self, text, model="llama3.1:latest", dimensions=None):
+        # Use Ollama local generation to contextualize the code description,
+        # then map the generated text to a deterministic local vector.
+        if dimensions is None:
+            dimensions = self.embedding_dim
+
+        prompt = (
+            "You are a medical coding expert. Rewrite the following code description into "
+            "one concise factual sentence, preserving the medical meaning exactly.\n\n"
+            f"{text}"
+        )
+
+        try:
+            generated_text = self._ollama_generate(prompt, model=model)
+            return self._text_to_vector(generated_text, dimensions)
+        except Exception as err:
+            print(f"Ollama generation failed ({err}). Falling back to deterministic local vectorization.")
+            return self._text_to_vector(text, dimensions)
 
     def _get_llm_emb(self, codes, code_type, level):
 
@@ -426,21 +487,24 @@ class Mega(BaseModel):
 
         os.makedirs(self.gpt_embd_path, exist_ok=True)
 
+        def save_emb(name: str, arr: np.ndarray):
+            np.save(os.path.join(self.gpt_embd_path, f'{name}_gpt_emb{self.ds_size_ratio}.npy'), arr)
+
         print(f'creating llm embedding, llm_model:{self.llm_model}')
         dx1 = self.dx_table['l1'].unique().tolist()
         dx2 = self.dx_table['l2'].unique().tolist()
         dx3 = self.dx_table['l3'].unique().tolist()
         dx1_gpt_emb = self._get_llm_emb(codes=dx1, code_type='dx', level=1)
-        np.save(self.gpt_embd_path + f'dx1_gpt_emb{self.ds_size_ratio}.npy', dx1_gpt_emb)
+        save_emb('dx1', dx1_gpt_emb)
         self.dx1_gpt_emb = torch.tensor(dx1_gpt_emb, dtype=torch.float64).to(self.device1)
 
 
         dx2_gpt_emb = self._get_llm_emb(codes=dx2, code_type='dx', level=2)
-        np.save(self.gpt_embd_path + f'dx2_gpt_emb{self.ds_size_ratio}.npy', dx2_gpt_emb)
+        save_emb('dx2', dx2_gpt_emb)
         self.dx2_gpt_emb = torch.tensor(dx2_gpt_emb, dtype=torch.float64).to(self.device1)
 
         dx3_gpt_emb = self._get_llm_emb(codes=dx3, code_type='dx', level=3)
-        np.save(self.gpt_embd_path + f'dx3_gpt_emb{self.ds_size_ratio}.npy', dx3_gpt_emb)
+        save_emb('dx3', dx3_gpt_emb)
         self.dx3_gpt_emb = torch.tensor(dx3_gpt_emb, dtype=torch.float64).to(self.device1)
 
         rx1 = self.rx_table['l1'].unique().tolist()
@@ -448,15 +512,15 @@ class Mega(BaseModel):
         rx3 = self.rx_table['l3'].unique().tolist()
 
         rx1_gpt_emb = self._get_llm_emb(codes=rx1, code_type='rx', level=1)
-        np.save(self.gpt_embd_path + f'rx1_gpt_emb{self.ds_size_ratio}.npy', rx1_gpt_emb)
+        save_emb('rx1', rx1_gpt_emb)
         self.rx1_gpt_emb = torch.tensor(rx1_gpt_emb, dtype=torch.float64).to(self.device1)
 
         rx2_gpt_emb = self._get_llm_emb(codes=rx2, code_type='rx', level=2)
-        np.save(self.gpt_embd_path + f'rx2_gpt_emb{self.ds_size_ratio}.npy', rx2_gpt_emb)
+        save_emb('rx2', rx2_gpt_emb)
         self.rx2_gpt_emb = torch.tensor(rx2_gpt_emb, dtype=torch.float64).to(self.device1)
 
         rx3_gpt_emb = self._get_llm_emb(codes=rx3, code_type='rx', level=3)
-        np.save(self.gpt_embd_path + f'rx3_gpt_emb{self.ds_size_ratio}.npy', rx3_gpt_emb)
+        save_emb('rx3', rx3_gpt_emb)
         self.rx3_gpt_emb = torch.tensor(rx3_gpt_emb, dtype=torch.float64).to(self.device1)
 
         px1 = self.px_table['l1'].unique().tolist()
@@ -464,21 +528,24 @@ class Mega(BaseModel):
         px3 = self.px_table['l3'].unique().tolist()
 
         px1_gpt_emb = self._get_llm_emb(codes=px1, code_type='px', level=1)
-        np.save(self.gpt_embd_path+ f'px1_gpt_emb{self.ds_size_ratio}.npy', px1_gpt_emb)
+        save_emb('px1', px1_gpt_emb)
         self.px1_gpt_emb = torch.tensor(px1_gpt_emb, dtype=torch.float64).to(self.device1)
 
         px2_gpt_emb = self._get_llm_emb(codes=px2, code_type='px', level=2)
-        np.save(self.gpt_embd_path+ f'px2_gpt_emb{self.ds_size_ratio}.npy', px2_gpt_emb)
+        save_emb('px2', px2_gpt_emb)
         self.px2_gpt_emb = torch.tensor(px2_gpt_emb, dtype=torch.float64).to(self.device1)
 
         px3_gpt_emb = self._get_llm_emb(codes=px3, code_type='px', level=3)
-        np.save(self.gpt_embd_path+ f'px3_gpt_emb{self.ds_size_ratio}.npy', px3_gpt_emb)
+        save_emb('px3', px3_gpt_emb)
         self.px3_gpt_emb = torch.tensor(px3_gpt_emb, dtype=torch.float64).to(self.device1)
 
         return
 
     def create_random_llm_emb(self):
         os.makedirs(self.gpt_embd_path, exist_ok=True)
+
+        def save_emb(name: str, arr: np.ndarray):
+            np.save(os.path.join(self.gpt_embd_path, f'{name}_gpt_emb{self.ds_size_ratio}.npy'), arr)
 
         rng = np.random.default_rng(self.seed)
 
@@ -504,17 +571,17 @@ class Mega(BaseModel):
         px2_gpt_emb = rng.standard_normal((len(px2), self.embedding_dim), dtype=np.float32)
         px3_gpt_emb = rng.standard_normal((len(px3), self.embedding_dim), dtype=np.float32)
 
-        np.save(self.gpt_embd_path + f'dx1_gpt_emb{self.ds_size_ratio}.npy', dx1_gpt_emb)
-        np.save(self.gpt_embd_path + f'dx2_gpt_emb{self.ds_size_ratio}.npy', dx2_gpt_emb)
-        np.save(self.gpt_embd_path + f'dx3_gpt_emb{self.ds_size_ratio}.npy', dx3_gpt_emb)
+        save_emb('dx1', dx1_gpt_emb)
+        save_emb('dx2', dx2_gpt_emb)
+        save_emb('dx3', dx3_gpt_emb)
 
-        np.save(self.gpt_embd_path + f'rx1_gpt_emb{self.ds_size_ratio}.npy', rx1_gpt_emb)
-        np.save(self.gpt_embd_path + f'rx2_gpt_emb{self.ds_size_ratio}.npy', rx2_gpt_emb)
-        np.save(self.gpt_embd_path + f'rx3_gpt_emb{self.ds_size_ratio}.npy', rx3_gpt_emb)
+        save_emb('rx1', rx1_gpt_emb)
+        save_emb('rx2', rx2_gpt_emb)
+        save_emb('rx3', rx3_gpt_emb)
 
-        np.save(self.gpt_embd_path + f'px1_gpt_emb{self.ds_size_ratio}.npy', px1_gpt_emb)
-        np.save(self.gpt_embd_path + f'px2_gpt_emb{self.ds_size_ratio}.npy', px2_gpt_emb)
-        np.save(self.gpt_embd_path + f'px3_gpt_emb{self.ds_size_ratio}.npy', px3_gpt_emb)
+        save_emb('px1', px1_gpt_emb)
+        save_emb('px2', px2_gpt_emb)
+        save_emb('px3', px3_gpt_emb)
 
         self.dx1_gpt_emb = torch.tensor(dx1_gpt_emb, dtype=torch.float32).to(self.device1)
         self.dx2_gpt_emb = torch.tensor(dx2_gpt_emb, dtype=torch.float32).to(self.device1)
