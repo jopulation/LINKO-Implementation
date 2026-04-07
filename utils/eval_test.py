@@ -203,6 +203,11 @@ def get_group_eval(y_true, y_prob, co_occurrence_counts, all_metrics, group_labe
 
     #print(labels_to_include)
 
+    # Handle empty groups (no positive samples)
+    if y_true_group.shape[0] == 0:
+        # Return default values when no positive samples exist
+        return {metric: 0.0 for metric in all_metrics}
+
     # Calculate and return metric for the current group
     return multilabel_metrics_fn(y_true_group, y_prob_group, metrics=all_metrics)
 

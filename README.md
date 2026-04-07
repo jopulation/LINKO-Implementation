@@ -137,7 +137,27 @@ Output directory is under:
 output/OntoFAR_1.0/EXP_seed_<seed>/
 ```
 
-## 6) How To Stop Training Mid-run
+## 6) 학습 결과 정리와 시각화
+
+학습이 끝나면 아래 파일에서 최종 결과를 확인할 수 있습니다.
+
+- `results_prompting/metrics_results_BestModel_OntoFAR_1.0.txt`
+- `results_prompting/metrics_results_BestModel_OntoFAR_1.0_summary.json`
+- `results_prompting/metrics_results_BestModel_OntoFAR_1.0_summary.png`
+
+시각화 자료는 아래처럼 정리했습니다.
+
+- 왼쪽 그래프: `pr_auc_samples`, `roc_auc_samples`, `f1_samples` 평균값을 비교한 막대 그래프
+- 오른쪽 그래프: `acc_at_k`, `hit_at_k`를 `k`별로 비교한 선 그래프
+
+한국어로 정리하면 다음과 같습니다.
+
+- 이 실험은 MIMIC-III 기반의 다중 라벨 진단 예측 모델 LINKO를 학습한 결과입니다.
+- 학습 완료 후 각 seed별 체크포인트는 `output/OntoFAR_1.0/EXP_seed_<seed>/` 아래에 저장됩니다.
+- 최종 요약 지표는 `results_prompting/` 폴더에 텍스트, JSON, PNG 형태로 함께 저장됩니다.
+- 위 PNG 파일은 학습이 잘 되었는지 한눈에 보기 위한 요약 시각화 자료입니다.
+
+## 7) How To Stop Training Mid-run
 
 ### In terminal foreground
 

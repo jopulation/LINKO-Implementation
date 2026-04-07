@@ -9,6 +9,7 @@ import os
 from utils.data import customized_set_task_mimic3
 import random
 from pyhealth.datasets import split_by_patient, get_dataloader
+from multiprocessing import freeze_support
 
 
 def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, record_results=True):
@@ -296,23 +297,29 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
 
     return
 
+def main():
+    freeze_support()
 
-mimic3_ds = MIMIC3Dataset(
-    root="datasets/MIMIC_III/",
-    tables=["DIAGNOSES_ICD", "PROCEDURES_ICD", "PRESCRIPTIONS"],
-    # map all NDC codes to ATC 3-rd level codes in these tables
-    code_mapping={
-        "NDC": ("ATC", {"target_kwargs": {"level": 4}})},
-    dev=os.getenv("MIMIC_DEV", "0") == "1",
-)
-print('--mimic-III loaded.')
-mimic3sample = customized_set_task_mimic3(dataset=mimic3_ds,
-                                          task_fn=sequential_diagnosis_prediction_mimic3,
-                                          ccs_label=False,
-                                          ds_size_ratio=1.0,
-                                          seed=45)
-print('--datasets created.')
-print(mimic3sample.stat())
-epochs = int(os.getenv("EPOCHS", "230"))
-nfold_experiment(mimic3sample, epochs=epochs, ds_size_ratio=1.0)
+    mimic3_ds = MIMIC3Dataset(
+        root="datasets/MIMIC_III/",
+        tables=["DIAGNOSES_ICD", "PROCEDURES_ICD", "PRESCRIPTIONS"],
+        # map all NDC codes to ATC 3-rd level codes in these tables
+        code_mapping={
+            "NDC": ("ATC", {"target_kwargs": {"level": 4}})},
+        dev=os.getenv("MIMIC_DEV", "0") == "1",
+    )
+    print('--mimic-III loaded.')
+    mimic3sample = customized_set_task_mimic3(dataset=mimic3_ds,
+                                              task_fn=sequential_diagnosis_prediction_mimic3,
+                                              ccs_label=False,
+                                              ds_size_ratio=1.0,
+                                              seed=45)
+    print('--datasets created.')
+    print(mimic3sample.stat())
+    epochs = int(os.getenv("EPOCHS", "230"))
+    nfold_experiment(mimic3sample, epochs=epochs, ds_size_ratio=1.0)
+
+
+if __name__ == "__main__":
+    main()
 
