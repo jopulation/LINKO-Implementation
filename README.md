@@ -341,6 +341,14 @@ results_prompting/metrics_results_BestModel_OntoFAR_1.0_summary.png
 - 왼쪽 그래프: `pr_auc_samples`, `roc_auc_samples`, `f1_samples` 평균 비교
 - 오른쪽 그래프: `acc_at_k`, `hit_at_k`를 `k`별로 비교
 
+결과 해석:
+
+- 코어 지표에서는 `roc_auc_samples`가 약 `0.524`로 가장 높고, `pr_auc_samples`는 약 `0.203`, `f1_samples`는 약 `0.149` 수준입니다.
+- 이 패턴은 클래스 불균형이 있는 환경에서 임계값 기반 분류 성능(`F1`)이 아직 제한적일 수 있음을 시사합니다.
+- `acc_at_k`는 `k=3`에서 약 `0.508`로 시작해 `k`가 커질수록 완만하게 감소하는 경향을 보입니다. 이는 `k` 증가에 따라 분모가 함께 커지는 지표 특성으로 해석할 수 있습니다.
+- `hit_at_k`는 상위 후보 안에 정답이 포함되는지 보는 지표이므로, 본 결과에서는 상위 후보군 포착 자체는 비교적 안정적인 편입니다.
+- 다만 seed 간 신뢰구간(CI)이 일부 지표에서 넓게 나타나므로, 현재 수치는 절대 성능 확정보다 파이프라인 동작 검증 관점에서 해석하는 것이 안전합니다.
+
 ### 8.4 시각화 생성 방법
 
 아래 명령은 README에 필요한 시각화 파일을 한 번에 생성합니다.
@@ -353,6 +361,92 @@ python utils/generate_readme_visuals.py --input results_prompting/metrics_result
 
 ```bash
 python utils/visualize_results.py --input results_prompting/metrics_results_BestModel_OntoFAR_1.0.txt --output-dir results_prompting
+```
+
+### 8.5 LLM 임베딩 구조 시각화
+
+#### 임베딩 파일 저장 위치
+
+로컬 LLM(Ollama)으로 생성된 의료 코드 임베딩 벡터는 NumPy 바이너리 형식(`.npy`)으로 저장됩니다.
+
+**저장 경로:**
+```
+saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/
+```
+
+**파일 목록 (9개):**
+
+| 파일명 | 설명 | 코드 개수 | 임베딩 차원 |
+|-------|------|---------|------------|
+| `dx1_gpt_emb.npy` | 진단 코드 레벨 1 (최상위) | 3 | 128 |
+| `dx2_gpt_emb.npy` | 진단 코드 레벨 2 (중간) | 20 | 128 |
+| `dx3_gpt_emb.npy` | 진단 코드 레벨 3 (세부) | 163 | 128 |
+| `rx1_gpt_emb.npy` | 약물 코드 레벨 1 (최상위) | 14 | 128 |
+| `rx2_gpt_emb.npy` | 약물 코드 레벨 2 (중간) | 62 | 128 |
+| `rx3_gpt_emb.npy` | 약물 코드 레벨 3 (세부) | 111 | 128 |
+| `px1_gpt_emb.npy` | 시술 코드 레벨 1 (최상위) | 1 | 128 |
+| `px2_gpt_emb.npy` | 시술 코드 레벨 2 (중간) | 7 | 128 |
+| `px3_gpt_emb.npy` | 시술 코드 레벨 3 (세부) | 41 | 128 |
+
+#### 3-레벨 계층 구조의 의미
+
+의료 코드 표준(ICD-9, ATC 등)은 자연스럽게 3단계 계층 구조를 가집니다:
+
+- **L1 (최상위)**: 일반적 개념. 예: ICD-9 001-139 (감염성 질환)
+- **L2 (중간)**: 더 구체적 범주. 예: ICD-9 050-052 (두창 관련)
+- **L3 (세부)**: 임상에서 실제 사용하는 코드. 예: ICD-9 050.9 (두창 상세분류)
+
+이 3단계를 **계층 전파**(`bottom_up_hap()`)로 결합하면:
+- 세부 진단 관계 학습 (L3)
+- 중간 범주 관계 (L2)
+- 광범위 개념 정보 (L1)
+
+레벨별 정보 손실 없이 **다양한 스케일의 의료 개념 관계**를 학습할 수 있습니다.
+
+#### 임베딩 확인 및 시각화
+
+아래 명령으로 모든 임베딩 파일의 PCA 2D 시각화를 생성합니다:
+
+```bash
+python visualize_embeddings.py
+```
+
+생성된 이미지:
+```
+results_prompting/embeddings_visualization.png
+```
+
+![LLM Embeddings Visualization](results_prompting/embeddings_visualization.png)
+
+**시각화 해석:**
+
+- **각 서브플롯**: 진단(DX), 약물(RX), 시술(PX)별로 3 row × 3 column 배치
+- **데이터 포인트**: 각 의료 코드를 PCA로 2D로 축소한 것
+- **색상**: 코드 인덱스 표현 (진한 파란색 = 낮은 인덱스, 황색 = 높은 인덱스)
+- **PC1, PC2**: 각 주성분이 설명하는 분산 비율 표시 (보통 50~60%)
+
+**주요 특징:**
+
+- **L3 임베딩 (dx3, rx3, px3)**: 가장 많은 코드를 보유해 밀집된 군집 형태
+- **L1 임베딩 (dx1, px1)**: 코드 개수가 적어서 희소한 분포
+- **L2 임베딩**: L1과 L3 사이의 중간 밀도
+
+#### Python에서 직접 확인
+
+```python
+import numpy as np
+
+# 임베딩 로드
+dx1_emb = np.load('saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/dx1_gpt_emb.npy')
+
+# 기본 정보
+print(f"Shape: {dx1_emb.shape}")           # (3, 128)
+print(f"Data Type: {dx1_emb.dtype}")       # float32
+print(f"Min: {dx1_emb.min():.4f}, Max: {dx1_emb.max():.4f}")
+print(f"Mean: {dx1_emb.mean():.4f}, Std: {dx1_emb.std():.4f}")
+
+# 샘플 벡터
+print(dx1_emb[0])  # 첫 번째 코드의 임베딩
 ```
 
 ---
