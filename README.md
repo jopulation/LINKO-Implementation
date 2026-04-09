@@ -147,6 +147,7 @@ output/OntoFAR_1.0/EXP_seed_<seed>/
 
 시각화 자료는 아래처럼 정리했습니다.
 
+![results_prompting/summary](results_prompting/metrics_results_BestModel_OntoFAR_1.0_summary.png)
 - 왼쪽 그래프: `pr_auc_samples`, `roc_auc_samples`, `f1_samples` 평균값을 비교한 막대 그래프
 - 오른쪽 그래프: `acc_at_k`, `hit_at_k`를 `k`별로 비교한 선 그래프
 
