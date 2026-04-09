@@ -16,6 +16,7 @@ import json
 import hashlib
 import re
 import urllib.request
+import urllib.error
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -416,27 +417,70 @@ class Mega(BaseModel):
             raise ValueError("Ollama generate response was empty.")
         return response
 
+    def _ollama_embed(self, text: str, model: str) -> List[float]:
+        # Prefer the modern Ollama embedding endpoint and fall back to the legacy one.
+        payloads = [
+            (f"{self.ollama_base_url}/api/embed", {"model": model, "input": text}),
+            (f"{self.ollama_base_url}/api/embeddings", {"model": model, "prompt": text}),
+        ]
+
+        last_error = None
+        for url, payload_obj in payloads:
+            try:
+                payload = json.dumps(payload_obj).encode("utf-8")
+                req = urllib.request.Request(
+                    url,
+                    data=payload,
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=120) as resp:
+                    result = json.loads(resp.read().decode("utf-8"))
+
+                if "embeddings" in result and result["embeddings"]:
+                    return result["embeddings"][0]
+                if "embedding" in result and result["embedding"]:
+                    return result["embedding"]
+                raise ValueError(f"Empty embedding response from {url}.")
+            except Exception as err:
+                last_error = err
+                continue
+
+        raise ValueError(f"Ollama embedding request failed: {last_error}")
+
     def _get_gpt_embedding(self, text, model="llama3.1:latest", dimensions=None):
-        # Use Ollama local generation to contextualize the code description,
-        # then map the generated text to a deterministic local vector.
         if dimensions is None:
             dimensions = self.embedding_dim
 
-        if os.getenv("LINKO_SKIP_OLLAMA", "0") == "1":
-            return self._text_to_vector(text, dimensions)
-
         prompt = (
-            "You are a medical coding expert. Rewrite the following code description into "
-            "one concise factual sentence, preserving the medical meaning exactly.\n\n"
-            f"{text}"
+            "You are a senior medical ontology specialist.\n"
+            "Task: convert the input code description into a compact, semantically rich representation text "
+            "that preserves diagnosis/procedure/drug meaning and hierarchy.\n"
+            "Requirements:\n"
+            "1) Keep all clinical meaning faithful.\n"
+            "2) Keep parent-child hierarchy cues explicit if present.\n"
+            "3) Keep wording concise and factual.\n"
+            "4) Prefer medically informative terms over abbreviations when possible.\n"
+            "Input description:\n"
+            f"{text}\n\n"
+            "Output only the rewritten single sentence."
         )
+
+        if os.getenv("LINKO_SKIP_OLLAMA", "0") == "1":
+            return self._text_to_vector(prompt, dimensions)
+
+        try:
+            llm_embedding = self._ollama_embed(prompt, model=model)
+            return self._fit_embedding_dim(llm_embedding, dimensions)
+        except Exception as err:
+            print(f"Ollama embedding failed ({err}). Falling back to generation + deterministic vectorization.")
 
         try:
             generated_text = self._ollama_generate(prompt, model=model)
             return self._text_to_vector(generated_text, dimensions)
         except Exception as err:
             print(f"Ollama generation failed ({err}). Falling back to deterministic local vectorization.")
-            return self._text_to_vector(text, dimensions)
+            return self._text_to_vector(prompt, dimensions)
 
     def _get_llm_emb(self, codes, code_type, level):
 
