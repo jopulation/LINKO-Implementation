@@ -121,8 +121,31 @@ class Mega(BaseModel):
 
         embedding_names = ['dx1', 'dx2', 'dx3', 'rx1', 'rx2', 'rx3', 'px1', 'px2', 'px3']
         embedding_paths = [emb_path(name) for name in embedding_names]
+        expected_rows = {
+            'dx1': len(self.dx_table['l1'].unique()),
+            'dx2': len(self.dx_table['l2'].unique()),
+            'dx3': len(self.dx_table['l3'].unique()),
+            'rx1': len(self.rx_table['l1'].unique()),
+            'rx2': len(self.rx_table['l2'].unique()),
+            'rx3': len(self.rx_table['l3'].unique()),
+            'px1': len(self.px_table['l1'].unique()),
+            'px2': len(self.px_table['l2'].unique()),
+            'px3': len(self.px_table['l3'].unique()),
+        }
 
-        if all(os.path.isfile(path) for path in embedding_paths):
+        cache_valid = all(os.path.isfile(path) for path in embedding_paths)
+        if cache_valid:
+            for name in embedding_names:
+                arr = np.load(emb_path(name))
+                expected_shape = (expected_rows[name], self.embedding_dim)
+                if arr.shape != expected_shape:
+                    print(
+                        f"Embedding cache shape mismatch for {name}: got {arr.shape}, expected {expected_shape}. Regenerating embeddings."
+                    )
+                    cache_valid = False
+                    break
+
+        if cache_valid:
 
             self.dx1_gpt_emb = torch.tensor(np.load(emb_path('dx1')), dtype=torch.float32)
             self.dx2_gpt_emb = torch.tensor(np.load(emb_path('dx2')), dtype=torch.float32)
@@ -138,7 +161,10 @@ class Mega(BaseModel):
 
         else:
             try:
-                self.creat_llm_emb()
+                if os.getenv("LINKO_SKIP_OLLAMA", "0") == "1":
+                    self.create_random_llm_emb()
+                else:
+                    self.creat_llm_emb()
             except Exception as e:
                 print(f"LLM embedding generation failed ({e}). Falling back to random local embeddings.")
                 self.create_random_llm_emb()
@@ -245,6 +271,52 @@ class Mega(BaseModel):
         self.dropout = nn.Dropout(dropout)
 
 
+    def _resolve_onto_code(self, onto: InnerMap, code: str) -> str:
+        raw = str(code)
+        candidates = [
+            raw,
+            raw.replace(".", ""),
+            raw.strip(),
+            raw.strip().replace(".", ""),
+        ]
+
+        seen = set()
+        for candidate in candidates:
+            if not candidate or candidate in seen:
+                continue
+            seen.add(candidate)
+            try:
+                onto.get_ancestors(candidate)
+                return candidate
+            except Exception:
+                continue
+
+        return raw
+
+    def _safe_get_ancestors(self, onto: InnerMap, code: str) -> List[str]:
+        resolved_code = self._resolve_onto_code(onto, code)
+        try:
+            ancestors = onto.get_ancestors(resolved_code)
+        except Exception:
+            ancestors = []
+
+        if len(ancestors) >= 2:
+            return ancestors
+        if len(ancestors) == 1:
+            return [ancestors[0], ancestors[0]]
+        return [resolved_code, resolved_code]
+
+    def _safe_lookup(self, onto: InnerMap, code: str) -> str:
+        try:
+            return onto.lookup(code)
+        except Exception:
+            resolved_code = self._resolve_onto_code(onto, code)
+            try:
+                return onto.lookup(resolved_code)
+            except Exception:
+                return str(code)
+
+
     def _ontology_tables(self):
         icd9 = InnerMap.load("ICD9CM")
         icd9proc = InnerMap.load("ICD9PROC")
@@ -253,7 +325,7 @@ class Mega(BaseModel):
         dx_parents1, dx_parents2 = [], []
         dx_parents3 = self.dataset.get_all_tokens('conditions')
         for code in dx_parents3:
-            dx_parents = icd9.get_ancestors(code)
+            dx_parents = self._safe_get_ancestors(icd9, code)
             dx_parents1.append(dx_parents[-1])
             dx_parents2.append(dx_parents[-2])
 
@@ -266,7 +338,7 @@ class Mega(BaseModel):
         rx_parents1, rx_parents2 = [], []
         rx_parents3 = self.dataset.get_all_tokens('drugs')
         for code in rx_parents3:
-            rx_parents = atc.get_ancestors(code)
+            rx_parents = self._safe_get_ancestors(atc, code)
             rx_parents1.append(rx_parents[-1])
             rx_parents2.append(rx_parents[-2])
 
@@ -278,7 +350,7 @@ class Mega(BaseModel):
         px_parents1, px_parents2 = [], []
         px_parents3 = self.dataset.get_all_tokens('procedures')
         for code in px_parents3:
-            px_parents = icd9proc.get_ancestors(code)
+            px_parents = self._safe_get_ancestors(icd9proc, code)
             px_parents1.append(px_parents[-1])
             px_parents2.append(px_parents[-2])
 
@@ -499,28 +571,29 @@ class Mega(BaseModel):
 
         gpt_code_emb_lst = []
         for code in codes:
+            resolved_code = self._resolve_onto_code(onto, code)
             if level==3:
-                parents = onto.get_ancestors(code)
+                parents = self._safe_get_ancestors(onto, resolved_code)
                 parent_code1, parent_code2 = parents[-1], parents[-2]
 
-                code_concept_name = onto.lookup(code)
-                parent1_concept_name = onto.lookup(parent_code1)
-                parent2_concept_name = onto.lookup(parent_code2)
+                code_concept_name = self._safe_lookup(onto, resolved_code)
+                parent1_concept_name = self._safe_lookup(onto, parent_code1)
+                parent2_concept_name = self._safe_lookup(onto, parent_code2)
 
 
                 text = f"{code_type} code {code} represents {code_concept_name}. It is a specific medical concept under the broader categories of {parent_code2} ({parent2_concept_name}) and {parent_code1} ({parent1_concept_name})."
 
             elif level==2:
-                parents = onto.get_ancestors(code)
+                parents = self._safe_get_ancestors(onto, resolved_code)
                 parent_code1 = parents[-1]
 
-                code_concept_name = onto.lookup(code)
-                parent1_concept_name = onto.lookup(parent_code1)
+                code_concept_name = self._safe_lookup(onto, resolved_code)
+                parent1_concept_name = self._safe_lookup(onto, parent_code1)
 
                 text = f"{code_type} code {code} represents {code_concept_name}. It is a specific medical concept under the broader categoriey of {parent_code1} ({parent1_concept_name})."
 
             elif level==1:
-                code_concept_name = onto.lookup(code)
+                code_concept_name = self._safe_lookup(onto, resolved_code)
                 text = f'{code_type} code {code} represents {code_concept_name}. which a general medical concept'
                 # text = f'{code_type} code:{code_concept_name}'
 
