@@ -60,7 +60,16 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
         print('preprocessing done!')
 
         # Stage 3: define model
-        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        use_gpu = os.getenv("USE_GPU", "1") == "1"
+        if use_gpu:
+            if not torch.cuda.is_available():
+                raise RuntimeError(
+                    "USE_GPU=1 but CUDA is not available. "
+                    "Install a CUDA-enabled PyTorch build or set USE_GPU=0."
+                )
+            device = "cuda:0"
+        else:
+            device = "cpu"
 
         if ds_size_ratio==1.0:
             ds_size_ratio_model = ''
@@ -91,8 +100,24 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
 
         # Stage 4: model training
 
+        exp_path = f"./output/OntoFAR_{ds_size_ratio}/EXP_seed_{seed}"
+        resume_training = os.getenv("RESUME_TRAINING", "0") == "1"
+        resume_ckpt = os.getenv("RESUME_CKPT", "").strip()
+        checkpoint_path = None
+        if resume_training:
+            if resume_ckpt:
+                checkpoint_path = resume_ckpt
+            else:
+                candidate_last = os.path.join(exp_path, "last.ckpt")
+                if os.path.isfile(candidate_last):
+                    checkpoint_path = candidate_last
+            if checkpoint_path is None:
+                print(f"Resume requested for seed {seed}, but no checkpoint was found. Starting fresh.")
+            else:
+                print(f"Resuming seed {seed} from checkpoint: {checkpoint_path}")
+
         trainer = Trainer(model=model,
-                          checkpoint_path=None,
+                          checkpoint_path=checkpoint_path,
                           metrics = ['roc_auc_samples', 'pr_auc_samples', 'f1_samples'],
                           enable_logging=True,
                           output_path=f"./output/OntoFAR_{ds_size_ratio}",
