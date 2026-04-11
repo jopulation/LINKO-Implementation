@@ -1,445 +1,445 @@
 
-mean pr_auc_samples: 0.20321832664085293
-max pr_auc_samples: 0.2750958417801539
-min pr_auc_samples: 0.08717664871448635
-CI pr_auc_samples: 0.062309462971543085
+mean pr_auc_samples: 0.11268933648062227
+max pr_auc_samples: 0.11268933648062227
+min pr_auc_samples: 0.11268933648062227
+CI pr_auc_samples: nan
 
-mean roc_auc_samples: 0.5236996200695857
-max roc_auc_samples: 0.5840183315005474
-min roc_auc_samples: 0.4409877877650093
-CI roc_auc_samples: 0.05101579357123393
+mean roc_auc_samples: 0.895394378226949
+max roc_auc_samples: 0.895394378226949
+min roc_auc_samples: 0.895394378226949
+CI roc_auc_samples: nan
 
-mean f1_samples: 0.14880638767299476
-max f1_samples: 0.31840796019900497
-min f1_samples: 0.04703693861280893
-CI f1_samples: 0.09620194032138678
-
-
-mean pr_auc_samples_0-25: 0.21796940102170823
-max pr_auc_samples_0-25: 0.30436428045393954
-min pr_auc_samples_0-25: 0.05224884494027496
-CI pr_auc_samples_0-25: 0.08717485103325817
-
-mean roc_auc_samples_0-25: 0.5032204142243131
-max roc_auc_samples_0-25: 0.6199090839136469
-min roc_auc_samples_0-25: 0.3244845360824743
-CI roc_auc_samples_0-25: 0.09520285927150304
+mean f1_samples: 0.07980529106464482
+max f1_samples: 0.07980529106464482
+min f1_samples: 0.07980529106464482
+CI f1_samples: nan
 
 
-mean pr_auc_samples_25-50: 0.20910133547572948
-max pr_auc_samples_25-50: 0.3022228944329481
-min pr_auc_samples_25-50: 0.13571428571428573
-CI pr_auc_samples_25-50: 0.052574356960633596
+mean pr_auc_samples_0-25: 0.1091278903994108
+max pr_auc_samples_0-25: 0.1091278903994108
+min pr_auc_samples_0-25: 0.1091278903994108
+CI pr_auc_samples_0-25: nan
 
-mean roc_auc_samples_25-50: 0.5688629846962341
-max roc_auc_samples_25-50: 0.8731343283582089
-min roc_auc_samples_25-50: 0.38125000000000003
-CI roc_auc_samples_25-50: 0.16165871918815652
-
-
-mean pr_auc_samples_50-75: 0.19883026695526695
-max pr_auc_samples_50-75: 0.6845238095238095
-min pr_auc_samples_50-75: 0.0
-CI pr_auc_samples_50-75: 0.2654194614328345
-
-mean roc_auc_samples_50-75: 0.3052697302697303
-max roc_auc_samples_50-75: 0.8409090909090909
-min roc_auc_samples_50-75: 0.0
-CI roc_auc_samples_50-75: 0.36954741488087606
+mean roc_auc_samples_0-25: 0.8917651135536961
+max roc_auc_samples_0-25: 0.8917651135536961
+min roc_auc_samples_0-25: 0.8917651135536961
+CI roc_auc_samples_0-25: nan
 
 
-mean pr_auc_samples_75-100: 0.31587301587301586
-max pr_auc_samples_75-100: 1.0
-min pr_auc_samples_75-100: 0.0
-CI pr_auc_samples_75-100: 0.37270090273729806
+mean pr_auc_samples_25-50: 0.37078159090008933
+max pr_auc_samples_25-50: 0.37078159090008933
+min pr_auc_samples_25-50: 0.37078159090008933
+CI pr_auc_samples_25-50: nan
 
-mean roc_auc_samples_75-100: 0.3261904761904762
-max roc_auc_samples_75-100: 1.0
-min roc_auc_samples_75-100: 0.0
-CI roc_auc_samples_75-100: 0.3769076680275227
+mean roc_auc_samples_25-50: 0.936751384041073
+max roc_auc_samples_25-50: 0.936751384041073
+min roc_auc_samples_25-50: 0.936751384041073
+CI roc_auc_samples_25-50: nan
 
-------------------------------------------
-mean acc_at_k=3: 0.5076923076923078
-max acc_at_k=3: 0.6666666666666666
-min acc_at_k=3: 0.3333333333333333
-CI acc_at_k=3: 0.1468630081007723
 
-mean hit_at_k=3: 1.0
-max hit_at_k=3: 1.0
-min hit_at_k=3: 1.0
-CI hit_at_k=3: 0.0
+mean pr_auc_samples_50-75: 0.6038265765658881
+max pr_auc_samples_50-75: 0.6038265765658881
+min pr_auc_samples_50-75: 0.6038265765658881
+CI pr_auc_samples_50-75: nan
 
-mean Group_acc_at_k=3@0-25: 0.2717948717948718
-max Group_acc_at_k=3@0-25: 0.3589743589743589
-min Group_acc_at_k=3@0-25: 0.0
-CI Group_acc_at_k=3@0-25: 0.13353214781369074
+mean roc_auc_samples_50-75: 0.9134477672133017
+max roc_auc_samples_50-75: 0.9134477672133017
+min roc_auc_samples_50-75: 0.9134477672133017
+CI roc_auc_samples_50-75: nan
+
+
+mean pr_auc_samples_75-100: 0.4052865210473906
+max pr_auc_samples_75-100: 0.4052865210473906
+min pr_auc_samples_75-100: 0.4052865210473906
+CI pr_auc_samples_75-100: nan
+
+mean roc_auc_samples_75-100: 0.8093434343434345
+max roc_auc_samples_75-100: 0.8093434343434345
+min roc_auc_samples_75-100: 0.8093434343434345
+CI roc_auc_samples_75-100: nan
 
 ------------------------------------------
-mean Group_hit_at_k=3@0-25: 0.7692307692307693
-max Group_hit_at_k=3@0-25: 1.0
-min Group_hit_at_k=3@0-25: 0.0
-CI Group_hit_at_k=3@0-25: 0.3814123275720379
+mean acc_at_k=3: 0.20759493670886098
+max acc_at_k=3: 0.20759493670886098
+min acc_at_k=3: 0.20759493670886098
+CI acc_at_k=3: nan
 
-mean Group_acc_at_k=3@25-50: 0.20769230769230768
-max Group_acc_at_k=3@25-50: 0.37179487179487175
-min Group_acc_at_k=3@25-50: 0.0
-CI Group_acc_at_k=3@25-50: 0.1667543391020569
+mean hit_at_k=3: 0.4810126582278481
+max hit_at_k=3: 0.4810126582278481
+min hit_at_k=3: 0.4810126582278481
+CI hit_at_k=3: nan
 
-------------------------------------------
-mean Group_hit_at_k=3@25-50: 0.5538461538461539
-max Group_hit_at_k=3@25-50: 1.0
-min Group_hit_at_k=3@25-50: 0.0
-CI Group_hit_at_k=3@25-50: 0.45078919525889555
-
-mean Group_acc_at_k=3@50-75: 0.2208333333333333
-max Group_acc_at_k=3@50-75: 0.6666666666666666
-min Group_acc_at_k=3@50-75: 0.0
-CI Group_acc_at_k=3@50-75: 0.27439981881433784
+mean Group_acc_at_k=3@0-25: 0.20970464135021122
+max Group_acc_at_k=3@0-25: 0.20970464135021122
+min Group_acc_at_k=3@0-25: 0.20970464135021122
+CI Group_acc_at_k=3@0-25: nan
 
 ------------------------------------------
-mean Group_hit_at_k=3@50-75: 0.3
-max Group_hit_at_k=3@50-75: 1.0
-min Group_hit_at_k=3@50-75: 0.0
-CI Group_hit_at_k=3@50-75: 0.39199279690801075
+mean Group_hit_at_k=3@0-25: 0.489873417721519
+max Group_hit_at_k=3@0-25: 0.489873417721519
+min Group_hit_at_k=3@0-25: 0.489873417721519
+CI Group_hit_at_k=3@0-25: nan
 
-mean Group_acc_at_k=3@75-100: 0.26666666666666666
-max Group_acc_at_k=3@75-100: 1.0
-min Group_acc_at_k=3@75-100: 0.0
-CI Group_acc_at_k=3@75-100: 0.38094852364941245
-
-------------------------------------------
-mean Group_hit_at_k=3@75-100: 0.26666666666666666
-max Group_hit_at_k=3@75-100: 1.0
-min Group_hit_at_k=3@75-100: 0.0
-CI Group_hit_at_k=3@75-100: 0.38094852364941245
+mean Group_acc_at_k=3@25-50: 0.47732843137254904
+max Group_acc_at_k=3@25-50: 0.47732843137254904
+min Group_acc_at_k=3@25-50: 0.47732843137254904
+CI Group_acc_at_k=3@25-50: nan
 
 ------------------------------------------
-mean acc_at_k=5: 0.32
-max acc_at_k=5: 0.4
-min acc_at_k=5: 0.2
-CI acc_at_k=5: 0.0960182335271062
+mean Group_hit_at_k=3@25-50: 0.6231617647058824
+max Group_hit_at_k=3@25-50: 0.6231617647058824
+min Group_hit_at_k=3@25-50: 0.6231617647058824
+CI Group_hit_at_k=3@25-50: nan
 
-mean hit_at_k=5: 1.0
-max hit_at_k=5: 1.0
-min hit_at_k=5: 1.0
-CI hit_at_k=5: 0.0
-
-mean Group_acc_at_k=5@0-25: 0.23115384615384618
-max Group_acc_at_k=5@0-25: 0.4
-min Group_acc_at_k=5@0-25: 0.0
-CI Group_acc_at_k=5@0-25: 0.1335602792795971
+mean Group_acc_at_k=3@50-75: 0.6437908496732025
+max Group_acc_at_k=3@50-75: 0.6437908496732025
+min Group_acc_at_k=3@50-75: 0.6437908496732025
+CI Group_acc_at_k=3@50-75: nan
 
 ------------------------------------------
-mean Group_hit_at_k=5@0-25: 0.7846153846153847
-max Group_hit_at_k=5@0-25: 1.0
-min Group_hit_at_k=5@0-25: 0.0
-CI Group_hit_at_k=5@0-25: 0.3855614571027462
+mean Group_hit_at_k=3@50-75: 0.6745098039215687
+max Group_hit_at_k=3@50-75: 0.6745098039215687
+min Group_hit_at_k=3@50-75: 0.6745098039215687
+CI Group_hit_at_k=3@50-75: nan
 
-mean Group_acc_at_k=5@25-50: 0.3128205148073343
-max Group_acc_at_k=5@25-50: 0.5
-min Group_acc_at_k=5@25-50: 0.2
-CI Group_acc_at_k=5@25-50: 0.10845176002182678
-
-------------------------------------------
-mean Group_hit_at_k=5@25-50: 0.9
-max Group_hit_at_k=5@25-50: 1.0
-min Group_hit_at_k=5@25-50: 0.5
-CI Group_hit_at_k=5@25-50: 0.19599639845400538
-
-mean Group_acc_at_k=5@50-75: 0.225
-max Group_acc_at_k=5@50-75: 0.625
-min Group_acc_at_k=5@50-75: 0.0
-CI Group_acc_at_k=5@50-75: 0.27281544063881114
+mean Group_acc_at_k=3@75-100: 0.4722222222222222
+max Group_acc_at_k=3@75-100: 0.4722222222222222
+min Group_acc_at_k=3@75-100: 0.4722222222222222
+CI Group_acc_at_k=3@75-100: nan
 
 ------------------------------------------
-mean Group_hit_at_k=5@50-75: 0.35
-max Group_hit_at_k=5@50-75: 1.0
-min Group_hit_at_k=5@50-75: 0.0
-CI Group_hit_at_k=5@50-75: 0.4271642470794705
-
-mean Group_acc_at_k=5@75-100: 0.26666666666666666
-max Group_acc_at_k=5@75-100: 1.0
-min Group_acc_at_k=5@75-100: 0.0
-CI Group_acc_at_k=5@75-100: 0.38094852364941245
+mean Group_hit_at_k=3@75-100: 0.4722222222222222
+max Group_hit_at_k=3@75-100: 0.4722222222222222
+min Group_hit_at_k=3@75-100: 0.4722222222222222
+CI Group_hit_at_k=3@75-100: nan
 
 ------------------------------------------
-mean Group_hit_at_k=5@75-100: 0.26666666666666666
-max Group_hit_at_k=5@75-100: 1.0
-min Group_hit_at_k=5@75-100: 0.0
-CI Group_hit_at_k=5@75-100: 0.38094852364941245
+mean acc_at_k=5: 0.18892405067063636
+max acc_at_k=5: 0.18892405067063636
+min acc_at_k=5: 0.18892405067063636
+CI acc_at_k=5: nan
+
+mean hit_at_k=5: 0.6177215189873417
+max hit_at_k=5: 0.6177215189873417
+min hit_at_k=5: 0.6177215189873417
+CI hit_at_k=5: nan
+
+mean Group_acc_at_k=5@0-25: 0.18090717302093082
+max Group_acc_at_k=5@0-25: 0.18090717302093082
+min Group_acc_at_k=5@0-25: 0.18090717302093082
+CI Group_acc_at_k=5@0-25: nan
 
 ------------------------------------------
-mean acc_at_k=7: 0.23886446965919744
-max acc_at_k=7: 0.29670329670329665
-min acc_at_k=7: 0.14285714285714285
-CI acc_at_k=7: 0.06203565276834978
+mean Group_hit_at_k=5@0-25: 0.589873417721519
+max Group_hit_at_k=5@0-25: 0.589873417721519
+min Group_hit_at_k=5@0-25: 0.589873417721519
+CI Group_hit_at_k=5@0-25: nan
 
-mean hit_at_k=7: 1.0
-max hit_at_k=7: 1.0
-min hit_at_k=7: 1.0
-CI hit_at_k=7: 0.0
-
-mean Group_acc_at_k=7@0-25: 0.19855311406510215
-max Group_acc_at_k=7@0-25: 0.3391941402639661
-min Group_acc_at_k=7@0-25: 0.0
-CI Group_acc_at_k=7@0-25: 0.11645038741712023
+mean Group_acc_at_k=5@25-50: 0.6306985306717894
+max Group_acc_at_k=5@25-50: 0.6306985306717894
+min Group_acc_at_k=5@25-50: 0.6306985306717894
+CI Group_acc_at_k=5@25-50: nan
 
 ------------------------------------------
-mean Group_hit_at_k=7@0-25: 0.8
-max Group_hit_at_k=7@0-25: 1.0
-min Group_hit_at_k=7@0-25: 0.0
-CI Group_hit_at_k=7@0-25: 0.39199279690801075
+mean Group_hit_at_k=5@25-50: 0.7647058823529411
+max Group_hit_at_k=5@25-50: 0.7647058823529411
+min Group_hit_at_k=5@25-50: 0.7647058823529411
+CI Group_hit_at_k=5@25-50: nan
 
-mean Group_acc_at_k=7@25-50: 0.31589743838860435
-max Group_acc_at_k=7@25-50: 0.5
-min Group_acc_at_k=7@25-50: 0.14285714285714285
-CI Group_acc_at_k=7@25-50: 0.11178203135265574
-
-------------------------------------------
-mean Group_hit_at_k=7@25-50: 0.9
-max Group_hit_at_k=7@25-50: 1.0
-min Group_hit_at_k=7@25-50: 0.5
-CI Group_hit_at_k=7@25-50: 0.19599639845400538
-
-mean Group_acc_at_k=7@50-75: 0.325
-max Group_acc_at_k=7@50-75: 1.0
-min Group_acc_at_k=7@50-75: 0.0
-CI Group_acc_at_k=7@50-75: 0.4070170901110101
+mean Group_acc_at_k=5@50-75: 0.7039215687443229
+max Group_acc_at_k=5@50-75: 0.7039215687443229
+min Group_acc_at_k=5@50-75: 0.7039215687443229
+CI Group_acc_at_k=5@50-75: nan
 
 ------------------------------------------
-mean Group_hit_at_k=7@50-75: 0.35
-max Group_hit_at_k=7@50-75: 1.0
-min Group_hit_at_k=7@50-75: 0.0
-CI Group_hit_at_k=7@50-75: 0.4271642470794705
+mean Group_hit_at_k=5@50-75: 0.7411764705882353
+max Group_hit_at_k=5@50-75: 0.7411764705882353
+min Group_hit_at_k=5@50-75: 0.7411764705882353
+CI Group_hit_at_k=5@50-75: nan
 
-mean Group_acc_at_k=7@75-100: 0.3666666666666667
-max Group_acc_at_k=7@75-100: 1.0
-min Group_acc_at_k=7@75-100: 0.0
-CI Group_acc_at_k=7@75-100: 0.4431040832730559
-
-------------------------------------------
-mean Group_hit_at_k=7@75-100: 0.4
-max Group_hit_at_k=7@75-100: 1.0
-min Group_hit_at_k=7@75-100: 0.0
-CI Group_hit_at_k=7@75-100: 0.480091167635531
+mean Group_acc_at_k=5@75-100: 0.5833333333333334
+max Group_acc_at_k=5@75-100: 0.5833333333333334
+min Group_acc_at_k=5@75-100: 0.5833333333333334
+CI Group_acc_at_k=5@75-100: nan
 
 ------------------------------------------
-mean acc_at_k=10: 0.2420757044966404
-max acc_at_k=10: 0.3
-min acc_at_k=10: 0.1428571492433548
-CI acc_at_k=10: 0.05952219162749476
-
-mean hit_at_k=10: 1.0
-max hit_at_k=10: 1.0
-min hit_at_k=10: 1.0
-CI hit_at_k=10: 0.0
-
-mean Group_acc_at_k=10@0-25: 0.17452991568125212
-max Group_acc_at_k=10@0-25: 0.3476495769161444
-min Group_acc_at_k=10@0-25: 0.0
-CI Group_acc_at_k=10@0-25: 0.11527335489657682
+mean Group_hit_at_k=5@75-100: 0.5833333333333334
+max Group_hit_at_k=5@75-100: 0.5833333333333334
+min Group_hit_at_k=5@75-100: 0.5833333333333334
+CI Group_hit_at_k=5@75-100: nan
 
 ------------------------------------------
-mean Group_hit_at_k=10@0-25: 0.8
-max Group_hit_at_k=10@0-25: 1.0
-min Group_hit_at_k=10@0-25: 0.0
-CI Group_hit_at_k=10@0-25: 0.39199279690801075
+mean acc_at_k=7: 0.1773869802895763
+max acc_at_k=7: 0.1773869802895763
+min acc_at_k=7: 0.1773869802895763
+CI acc_at_k=7: nan
 
-mean Group_acc_at_k=10@25-50: 0.29640415400266645
-max Group_acc_at_k=10@25-50: 0.5
-min Group_acc_at_k=10@25-50: 0.125
-CI Group_acc_at_k=10@25-50: 0.12567676303816536
+mean hit_at_k=7: 0.6987341772151898
+max hit_at_k=7: 0.6987341772151898
+min hit_at_k=7: 0.6987341772151898
+CI hit_at_k=7: nan
 
-------------------------------------------
-mean Group_hit_at_k=10@25-50: 0.9
-max Group_hit_at_k=10@25-50: 1.0
-min Group_hit_at_k=10@25-50: 0.5
-CI Group_hit_at_k=10@25-50: 0.19599639845400538
-
-mean Group_acc_at_k=10@50-75: 0.375
-max Group_acc_at_k=10@50-75: 1.0
-min Group_acc_at_k=10@50-75: 0.0
-CI Group_acc_at_k=10@50-75: 0.4517493772539984
+mean Group_acc_at_k=7@0-25: 0.16337552757202847
+max Group_acc_at_k=7@0-25: 0.16337552757202847
+min Group_acc_at_k=7@0-25: 0.16337552757202847
+CI Group_acc_at_k=7@0-25: nan
 
 ------------------------------------------
-mean Group_hit_at_k=10@50-75: 0.375
-max Group_hit_at_k=10@50-75: 1.0
-min Group_hit_at_k=10@50-75: 0.0
-CI Group_hit_at_k=10@50-75: 0.4517493772539984
+mean Group_hit_at_k=7@0-25: 0.6544303797468355
+max Group_hit_at_k=7@0-25: 0.6544303797468355
+min Group_hit_at_k=7@0-25: 0.6544303797468355
+CI Group_hit_at_k=7@0-25: nan
 
-mean Group_acc_at_k=10@75-100: 0.6
-max Group_acc_at_k=10@75-100: 1.0
-min Group_acc_at_k=10@75-100: 0.0
-CI Group_acc_at_k=10@75-100: 0.480091167635531
-
-------------------------------------------
-mean Group_hit_at_k=10@75-100: 0.6
-max Group_hit_at_k=10@75-100: 1.0
-min Group_hit_at_k=10@75-100: 0.0
-CI Group_hit_at_k=10@75-100: 0.480091167635531
+mean Group_acc_at_k=7@25-50: 0.6751225503599819
+max Group_acc_at_k=7@25-50: 0.6751225503599819
+min Group_acc_at_k=7@25-50: 0.6751225503599819
+CI Group_acc_at_k=7@25-50: nan
 
 ------------------------------------------
-mean acc_at_k=15: 0.21856344755643456
-max acc_at_k=15: 0.28333333879709244
-min acc_at_k=15: 0.13333333333333333
-CI acc_at_k=15: 0.06473039660980816
+mean Group_hit_at_k=7@25-50: 0.7977941176470589
+max Group_hit_at_k=7@25-50: 0.7977941176470589
+min Group_hit_at_k=7@25-50: 0.7977941176470589
+CI Group_hit_at_k=7@25-50: nan
 
-mean hit_at_k=15: 1.0
-max hit_at_k=15: 1.0
-min hit_at_k=15: 1.0
-CI hit_at_k=15: 0.0
-
-mean Group_acc_at_k=15@0-25: 0.18369519559236674
-max Group_acc_at_k=15@0-25: 0.35538073518337343
-min Group_acc_at_k=15@0-25: 0.0
-CI Group_acc_at_k=15@0-25: 0.12733280957627288
+mean Group_acc_at_k=7@50-75: 0.7274509805090287
+max Group_acc_at_k=7@50-75: 0.7274509805090287
+min Group_acc_at_k=7@50-75: 0.7274509805090287
+CI Group_acc_at_k=7@50-75: nan
 
 ------------------------------------------
-mean Group_hit_at_k=15@0-25: 0.8
-max Group_hit_at_k=15@0-25: 1.0
-min Group_hit_at_k=15@0-25: 0.0
-CI Group_hit_at_k=15@0-25: 0.39199279690801075
+mean Group_hit_at_k=7@50-75: 0.7607843137254902
+max Group_hit_at_k=7@50-75: 0.7607843137254902
+min Group_hit_at_k=7@50-75: 0.7607843137254902
+CI Group_hit_at_k=7@50-75: nan
 
-mean Group_acc_at_k=15@25-50: 0.4111671706957695
-max Group_acc_at_k=15@25-50: 1.0
-min Group_acc_at_k=15@25-50: 0.125
-CI Group_acc_at_k=15@25-50: 0.2976639529198455
-
-------------------------------------------
-mean Group_hit_at_k=15@25-50: 1.0
-max Group_hit_at_k=15@25-50: 1.0
-min Group_hit_at_k=15@25-50: 1.0
-CI Group_hit_at_k=15@25-50: 0.0
-
-mean Group_acc_at_k=15@50-75: 0.4
-max Group_acc_at_k=15@50-75: 1.0
-min Group_acc_at_k=15@50-75: 0.0
-CI Group_acc_at_k=15@50-75: 0.480091167635531
+mean Group_acc_at_k=7@75-100: 0.75
+max Group_acc_at_k=7@75-100: 0.75
+min Group_acc_at_k=7@75-100: 0.75
+CI Group_acc_at_k=7@75-100: nan
 
 ------------------------------------------
-mean Group_hit_at_k=15@50-75: 0.4
-max Group_hit_at_k=15@50-75: 1.0
-min Group_hit_at_k=15@50-75: 0.0
-CI Group_hit_at_k=15@50-75: 0.480091167635531
-
-mean Group_acc_at_k=15@75-100: 0.6
-max Group_acc_at_k=15@75-100: 1.0
-min Group_acc_at_k=15@75-100: 0.0
-CI Group_acc_at_k=15@75-100: 0.480091167635531
+mean Group_hit_at_k=7@75-100: 0.75
+max Group_hit_at_k=7@75-100: 0.75
+min Group_hit_at_k=7@75-100: 0.75
+CI Group_hit_at_k=7@75-100: nan
 
 ------------------------------------------
-mean Group_hit_at_k=15@75-100: 0.6
-max Group_hit_at_k=15@75-100: 1.0
-min Group_hit_at_k=15@75-100: 0.0
-CI Group_hit_at_k=15@75-100: 0.480091167635531
+mean acc_at_k=10: 0.16884468621845486
+max acc_at_k=10: 0.16884468621845486
+min acc_at_k=10: 0.16884468621845486
+CI acc_at_k=10: nan
+
+mean hit_at_k=10: 0.759493670886076
+max hit_at_k=10: 0.759493670886076
+min hit_at_k=10: 0.759493670886076
+CI hit_at_k=10: nan
+
+mean Group_acc_at_k=10@0-25: 0.15670785688901245
+max Group_acc_at_k=10@0-25: 0.15670785688901245
+min Group_acc_at_k=10@0-25: 0.15670785688901245
+CI Group_acc_at_k=10@0-25: nan
 
 ------------------------------------------
-mean acc_at_k=20: 0.22113315080220883
-max acc_at_k=20: 0.3
-min acc_at_k=20: 0.1
-CI acc_at_k=20: 0.0811588620452969
+mean Group_hit_at_k=10@0-25: 0.7151898734177216
+max Group_hit_at_k=10@0-25: 0.7151898734177216
+min Group_hit_at_k=10@0-25: 0.7151898734177216
+CI Group_hit_at_k=10@0-25: nan
 
-mean hit_at_k=20: 1.0
-max hit_at_k=20: 1.0
-min hit_at_k=20: 1.0
-CI hit_at_k=20: 0.0
-
-mean Group_acc_at_k=20@0-25: 0.2560889144356434
-max Group_acc_at_k=20@0-25: 0.41258742144474614
-min Group_acc_at_k=20@0-25: 0.1428571492433548
-CI Group_acc_at_k=20@0-25: 0.08582973616044669
+mean Group_acc_at_k=10@25-50: 0.7170649522586781
+max Group_acc_at_k=10@25-50: 0.7170649522586781
+min Group_acc_at_k=10@25-50: 0.7170649522586781
+CI Group_acc_at_k=10@25-50: nan
 
 ------------------------------------------
-mean Group_hit_at_k=20@0-25: 1.0
-max Group_hit_at_k=20@0-25: 1.0
-min Group_hit_at_k=20@0-25: 1.0
-CI Group_hit_at_k=20@0-25: 0.0
+mean Group_hit_at_k=10@25-50: 0.8363970588235294
+max Group_hit_at_k=10@25-50: 0.8363970588235294
+min Group_hit_at_k=10@25-50: 0.8363970588235294
+CI Group_hit_at_k=10@25-50: nan
 
-mean Group_acc_at_k=20@25-50: 0.4348492413759232
-max Group_acc_at_k=20@25-50: 1.0
-min Group_acc_at_k=20@25-50: 0.125
-CI Group_acc_at_k=20@25-50: 0.2899146970908981
-
-------------------------------------------
-mean Group_hit_at_k=20@25-50: 1.0
-max Group_hit_at_k=20@25-50: 1.0
-min Group_hit_at_k=20@25-50: 1.0
-CI Group_hit_at_k=20@25-50: 0.0
-
-mean Group_acc_at_k=20@50-75: 0.4
-max Group_acc_at_k=20@50-75: 1.0
-min Group_acc_at_k=20@50-75: 0.0
-CI Group_acc_at_k=20@50-75: 0.480091167635531
+mean Group_acc_at_k=10@50-75: 0.7862745099207934
+max Group_acc_at_k=10@50-75: 0.7862745099207934
+min Group_acc_at_k=10@50-75: 0.7862745099207934
+CI Group_acc_at_k=10@50-75: nan
 
 ------------------------------------------
-mean Group_hit_at_k=20@50-75: 0.4
-max Group_hit_at_k=20@50-75: 1.0
-min Group_hit_at_k=20@50-75: 0.0
-CI Group_hit_at_k=20@50-75: 0.480091167635531
+mean Group_hit_at_k=10@50-75: 0.8156862745098039
+max Group_hit_at_k=10@50-75: 0.8156862745098039
+min Group_hit_at_k=10@50-75: 0.8156862745098039
+CI Group_hit_at_k=10@50-75: nan
 
-mean Group_acc_at_k=20@75-100: 0.6
-max Group_acc_at_k=20@75-100: 1.0
-min Group_acc_at_k=20@75-100: 0.0
-CI Group_acc_at_k=20@75-100: 0.480091167635531
-
-------------------------------------------
-mean Group_hit_at_k=20@75-100: 0.6
-max Group_hit_at_k=20@75-100: 1.0
-min Group_hit_at_k=20@75-100: 0.0
-CI Group_hit_at_k=20@75-100: 0.480091167635531
+mean Group_acc_at_k=10@75-100: 0.8888888888888888
+max Group_acc_at_k=10@75-100: 0.8888888888888888
+min Group_acc_at_k=10@75-100: 0.8888888888888888
+CI Group_acc_at_k=10@75-100: nan
 
 ------------------------------------------
-mean acc_at_k=30: 0.256184590558211
-max acc_at_k=30: 0.31477386752764386
-min acc_at_k=30: 0.1304347813129425
-CI acc_at_k=30: 0.06345661497131638
-
-mean hit_at_k=30: 1.0
-max hit_at_k=30: 1.0
-min hit_at_k=30: 1.0
-CI hit_at_k=30: 0.0
-
-mean Group_acc_at_k=30@0-25: 0.30169802823892006
-max Group_acc_at_k=30@0-25: 0.49777584121777463
-min Group_acc_at_k=30@0-25: 0.22500000149011612
-CI Group_acc_at_k=30@0-25: 0.0979295253821452
+mean Group_hit_at_k=10@75-100: 0.8888888888888888
+max Group_hit_at_k=10@75-100: 0.8888888888888888
+min Group_hit_at_k=10@75-100: 0.8888888888888888
+CI Group_hit_at_k=10@75-100: nan
 
 ------------------------------------------
-mean Group_hit_at_k=30@0-25: 1.0
-max Group_hit_at_k=30@0-25: 1.0
-min Group_hit_at_k=30@0-25: 1.0
-CI Group_hit_at_k=30@0-25: 0.0
+mean acc_at_k=15: 0.17807140659242285
+max acc_at_k=15: 0.17807140659242285
+min acc_at_k=15: 0.17807140659242285
+CI acc_at_k=15: nan
 
-mean Group_acc_at_k=30@25-50: 0.5096586484175462
-max Group_acc_at_k=30@25-50: 1.0
-min Group_acc_at_k=30@25-50: 0.25
-CI Group_acc_at_k=30@25-50: 0.25629326554236864
+mean hit_at_k=15: 0.8367088607594937
+max hit_at_k=15: 0.8367088607594937
+min hit_at_k=15: 0.8367088607594937
+CI hit_at_k=15: nan
 
-------------------------------------------
-mean Group_hit_at_k=30@25-50: 1.0
-max Group_hit_at_k=30@25-50: 1.0
-min Group_hit_at_k=30@25-50: 1.0
-CI Group_hit_at_k=30@25-50: 0.0
-
-mean Group_acc_at_k=30@50-75: 0.4
-max Group_acc_at_k=30@50-75: 1.0
-min Group_acc_at_k=30@50-75: 0.0
-CI Group_acc_at_k=30@50-75: 0.480091167635531
+mean Group_acc_at_k=15@0-25: 0.16567982860192507
+max Group_acc_at_k=15@0-25: 0.16567982860192507
+min Group_acc_at_k=15@0-25: 0.16567982860192507
+CI Group_acc_at_k=15@0-25: nan
 
 ------------------------------------------
-mean Group_hit_at_k=30@50-75: 0.4
-max Group_hit_at_k=30@50-75: 1.0
-min Group_hit_at_k=30@50-75: 0.0
-CI Group_hit_at_k=30@50-75: 0.480091167635531
+mean Group_hit_at_k=15@0-25: 0.7962025316455696
+max Group_hit_at_k=15@0-25: 0.7962025316455696
+min Group_hit_at_k=15@0-25: 0.7962025316455696
+CI Group_hit_at_k=15@0-25: nan
 
-mean Group_acc_at_k=30@75-100: 0.6
+mean Group_acc_at_k=15@25-50: 0.7719669131671681
+max Group_acc_at_k=15@25-50: 0.7719669131671681
+min Group_acc_at_k=15@25-50: 0.7719669131671681
+CI Group_acc_at_k=15@25-50: nan
+
+------------------------------------------
+mean Group_hit_at_k=15@25-50: 0.8768382352941176
+max Group_hit_at_k=15@25-50: 0.8768382352941176
+min Group_hit_at_k=15@25-50: 0.8768382352941176
+CI Group_hit_at_k=15@25-50: nan
+
+mean Group_acc_at_k=15@50-75: 0.856862745214911
+max Group_acc_at_k=15@50-75: 0.856862745214911
+min Group_acc_at_k=15@50-75: 0.856862745214911
+CI Group_acc_at_k=15@50-75: nan
+
+------------------------------------------
+mean Group_hit_at_k=15@50-75: 0.8823529411764706
+max Group_hit_at_k=15@50-75: 0.8823529411764706
+min Group_hit_at_k=15@50-75: 0.8823529411764706
+CI Group_hit_at_k=15@50-75: nan
+
+mean Group_acc_at_k=15@75-100: 0.9722222222222222
+max Group_acc_at_k=15@75-100: 0.9722222222222222
+min Group_acc_at_k=15@75-100: 0.9722222222222222
+CI Group_acc_at_k=15@75-100: nan
+
+------------------------------------------
+mean Group_hit_at_k=15@75-100: 0.9722222222222222
+max Group_hit_at_k=15@75-100: 0.9722222222222222
+min Group_hit_at_k=15@75-100: 0.9722222222222222
+CI Group_hit_at_k=15@75-100: nan
+
+------------------------------------------
+mean acc_at_k=20: 0.1981901785967093
+max acc_at_k=20: 0.1981901785967093
+min acc_at_k=20: 0.1981901785967093
+CI acc_at_k=20: nan
+
+mean hit_at_k=20: 0.8708860759493671
+max hit_at_k=20: 0.8708860759493671
+min hit_at_k=20: 0.8708860759493671
+CI hit_at_k=20: nan
+
+mean Group_acc_at_k=20@0-25: 0.18367553884658627
+max Group_acc_at_k=20@0-25: 0.18367553884658627
+min Group_acc_at_k=20@0-25: 0.18367553884658627
+CI Group_acc_at_k=20@0-25: nan
+
+------------------------------------------
+mean Group_hit_at_k=20@0-25: 0.8329113924050633
+max Group_hit_at_k=20@0-25: 0.8329113924050633
+min Group_hit_at_k=20@0-25: 0.8329113924050633
+CI Group_hit_at_k=20@0-25: nan
+
+mean Group_acc_at_k=20@25-50: 0.8117034328991876
+max Group_acc_at_k=20@25-50: 0.8117034328991876
+min Group_acc_at_k=20@25-50: 0.8117034328991876
+CI Group_acc_at_k=20@25-50: nan
+
+------------------------------------------
+mean Group_hit_at_k=20@25-50: 0.9099264705882353
+max Group_hit_at_k=20@25-50: 0.9099264705882353
+min Group_hit_at_k=20@25-50: 0.9099264705882353
+CI Group_hit_at_k=20@25-50: nan
+
+mean Group_acc_at_k=20@50-75: 0.8967320262217054
+max Group_acc_at_k=20@50-75: 0.8967320262217054
+min Group_acc_at_k=20@50-75: 0.8967320262217054
+CI Group_acc_at_k=20@50-75: nan
+
+------------------------------------------
+mean Group_hit_at_k=20@50-75: 0.9137254901960784
+max Group_hit_at_k=20@50-75: 0.9137254901960784
+min Group_hit_at_k=20@50-75: 0.9137254901960784
+CI Group_hit_at_k=20@50-75: nan
+
+mean Group_acc_at_k=20@75-100: 0.9722222222222222
+max Group_acc_at_k=20@75-100: 0.9722222222222222
+min Group_acc_at_k=20@75-100: 0.9722222222222222
+CI Group_acc_at_k=20@75-100: nan
+
+------------------------------------------
+mean Group_hit_at_k=20@75-100: 0.9722222222222222
+max Group_hit_at_k=20@75-100: 0.9722222222222222
+min Group_hit_at_k=20@75-100: 0.9722222222222222
+CI Group_hit_at_k=20@75-100: nan
+
+------------------------------------------
+mean acc_at_k=30: 0.24003995056362334
+max acc_at_k=30: 0.24003995056362334
+min acc_at_k=30: 0.24003995056362334
+CI acc_at_k=30: nan
+
+mean hit_at_k=30: 0.9164556962025316
+max hit_at_k=30: 0.9164556962025316
+min hit_at_k=30: 0.9164556962025316
+CI hit_at_k=30: nan
+
+mean Group_acc_at_k=30@0-25: 0.22147424906743726
+max Group_acc_at_k=30@0-25: 0.22147424906743726
+min Group_acc_at_k=30@0-25: 0.22147424906743726
+CI Group_acc_at_k=30@0-25: nan
+
+------------------------------------------
+mean Group_hit_at_k=30@0-25: 0.8759493670886076
+max Group_hit_at_k=30@0-25: 0.8759493670886076
+min Group_hit_at_k=30@0-25: 0.8759493670886076
+CI Group_hit_at_k=30@0-25: nan
+
+mean Group_acc_at_k=30@25-50: 0.8583639718263465
+max Group_acc_at_k=30@25-50: 0.8583639718263465
+min Group_acc_at_k=30@25-50: 0.8583639718263465
+CI Group_acc_at_k=30@25-50: nan
+
+------------------------------------------
+mean Group_hit_at_k=30@25-50: 0.9338235294117647
+max Group_hit_at_k=30@25-50: 0.9338235294117647
+min Group_hit_at_k=30@25-50: 0.9338235294117647
+CI Group_hit_at_k=30@25-50: nan
+
+mean Group_acc_at_k=30@50-75: 0.9490196078431372
+max Group_acc_at_k=30@50-75: 0.9490196078431372
+min Group_acc_at_k=30@50-75: 0.9490196078431372
+CI Group_acc_at_k=30@50-75: nan
+
+------------------------------------------
+mean Group_hit_at_k=30@50-75: 0.9568627450980393
+max Group_hit_at_k=30@50-75: 0.9568627450980393
+min Group_hit_at_k=30@50-75: 0.9568627450980393
+CI Group_hit_at_k=30@50-75: nan
+
+mean Group_acc_at_k=30@75-100: 1.0
 max Group_acc_at_k=30@75-100: 1.0
-min Group_acc_at_k=30@75-100: 0.0
-CI Group_acc_at_k=30@75-100: 0.480091167635531
+min Group_acc_at_k=30@75-100: 1.0
+CI Group_acc_at_k=30@75-100: nan
 
 ------------------------------------------
-mean Group_hit_at_k=30@75-100: 0.6
+mean Group_hit_at_k=30@75-100: 1.0
 max Group_hit_at_k=30@75-100: 1.0
-min Group_hit_at_k=30@75-100: 0.0
-CI Group_hit_at_k=30@75-100: 0.480091167635531
+min Group_hit_at_k=30@75-100: 1.0
+CI Group_hit_at_k=30@75-100: nan
 
