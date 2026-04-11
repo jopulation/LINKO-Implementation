@@ -370,23 +370,24 @@ python utils/visualize_results.py --input results_prompting/metrics_results_Best
 로컬 LLM(Ollama)으로 생성된 의료 코드 임베딩 벡터는 NumPy 바이너리 형식(`.npy`)으로 저장됩니다.
 
 **저장 경로:**
+
 ```
 saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/
 ```
 
 **파일 목록 (9개):**
 
-| 파일명 | 설명 | 코드 개수 | 임베딩 차원 |
-|-------|------|---------|------------|
-| `dx1_gpt_emb.npy` | 진단 코드 레벨 1 (최상위) | 3 | 128 |
-| `dx2_gpt_emb.npy` | 진단 코드 레벨 2 (중간) | 20 | 128 |
-| `dx3_gpt_emb.npy` | 진단 코드 레벨 3 (세부) | 163 | 128 |
-| `rx1_gpt_emb.npy` | 약물 코드 레벨 1 (최상위) | 14 | 128 |
-| `rx2_gpt_emb.npy` | 약물 코드 레벨 2 (중간) | 62 | 128 |
-| `rx3_gpt_emb.npy` | 약물 코드 레벨 3 (세부) | 111 | 128 |
-| `px1_gpt_emb.npy` | 시술 코드 레벨 1 (최상위) | 1 | 128 |
-| `px2_gpt_emb.npy` | 시술 코드 레벨 2 (중간) | 7 | 128 |
-| `px3_gpt_emb.npy` | 시술 코드 레벨 3 (세부) | 41 | 128 |
+| 파일명            | 설명                      | 코드 개수 | 임베딩 차원 |
+| ----------------- | ------------------------- | --------- | ----------- |
+| `dx1_gpt_emb.npy` | 진단 코드 레벨 1 (최상위) | 3         | 128         |
+| `dx2_gpt_emb.npy` | 진단 코드 레벨 2 (중간)   | 20        | 128         |
+| `dx3_gpt_emb.npy` | 진단 코드 레벨 3 (세부)   | 163       | 128         |
+| `rx1_gpt_emb.npy` | 약물 코드 레벨 1 (최상위) | 14        | 128         |
+| `rx2_gpt_emb.npy` | 약물 코드 레벨 2 (중간)   | 62        | 128         |
+| `rx3_gpt_emb.npy` | 약물 코드 레벨 3 (세부)   | 111       | 128         |
+| `px1_gpt_emb.npy` | 시술 코드 레벨 1 (최상위) | 1         | 128         |
+| `px2_gpt_emb.npy` | 시술 코드 레벨 2 (중간)   | 7         | 128         |
+| `px3_gpt_emb.npy` | 시술 코드 레벨 3 (세부)   | 41        | 128         |
 
 #### 3-레벨 계층 구조의 의미
 
@@ -397,6 +398,7 @@ saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/
 - **L3 (세부)**: 임상에서 실제 사용하는 코드. 예: ICD-9 050.9 (두창 상세분류)
 
 이 3단계를 **계층 전파**(`bottom_up_hap()`)로 결합하면:
+
 - 세부 진단 관계 학습 (L3)
 - 중간 범주 관계 (L2)
 - 광범위 개념 정보 (L1)
@@ -412,6 +414,7 @@ python visualize_embeddings.py
 ```
 
 생성된 이미지:
+
 ```
 results_prompting/embeddings_visualization.png
 ```
