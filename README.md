@@ -229,7 +229,10 @@ $env:PYTHONPATH='.'
 $env:MIMIC_DEV='1'
 $env:EPOCHS='1'
 $env:SMOKE_SEEDS='1'
-python train/train.py
+$env:USE_GPU='0'
+$env:RESUME_TRAINING='0'
+$env:LINKO_SKIP_OLLAMA='1'
+.\.venv\Scripts\python.exe -u train\train.py
 ```
 
 ### 6.2 전체 학습
@@ -238,14 +241,36 @@ python train/train.py
 $env:PYTHONPATH='.'
 $env:MIMIC_DEV='0'
 $env:EPOCHS='230'
+$env:USE_GPU='1'
+$env:RESUME_TRAINING='1'
 Remove-Item Env:SMOKE_SEEDS -ErrorAction SilentlyContinue
-python train/train.py
+Remove-Item Env:LINKO_SKIP_OLLAMA -ErrorAction SilentlyContinue
+.\.venv\Scripts\python.exe -u train\train.py
 ```
 
 결과 저장:
 
 - 체크포인트: `output/OntoFAR_1.0/EXP_seed_<seed>/`
 - 지표 요약: `results_prompting/`
+
+### 6.3 GPU/이어학습 관련 환경변수
+
+- `USE_GPU='1'`: CUDA GPU 강제 사용. CUDA가 없으면 학습 시작 전에 에러로 중단됩니다.
+- `RESUME_TRAINING='1'`: seed별 `output/OntoFAR_1.0/EXP_seed_<seed>/last.ckpt`에서 이어학습을 시도합니다.
+- `RESUME_CKPT='<path>'`: 특정 체크포인트를 직접 지정해 이어학습합니다.
+- `LINKO_SKIP_OLLAMA='1'`: Ollama 호출을 건너뛰고 fallback 임베딩 경로를 사용합니다.
+
+GPU 인식 확인:
+
+```powershell
+.\.venv\Scripts\python.exe -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'no cuda')"
+```
+
+이어학습 체크포인트 확인:
+
+```powershell
+Get-ChildItem .\output\OntoFAR_1.0\EXP_seed_*\last.ckpt
+```
 
 ---
 
