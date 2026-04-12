@@ -23,7 +23,8 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
     co_occurrence_counts, groups1 = get_group_labels1(data)
 
     folds = int(os.getenv("FOLDS", "5"))
-    if os.getenv("SMOKE_FOLDS", "0") == "1":
+    smoke_mode = os.getenv("SMOKE_FOLDS", "0") == "1"
+    if smoke_mode:
         folds = 1
 
 
@@ -43,32 +44,59 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
             metrics_dict[f'Group_hit_at_k={k}@' + group_name] = []
 
 
-    patient_ids = list(mimic3sample.patient_to_index.keys())
-    rng = np.random.default_rng(45)
-    rng.shuffle(patient_ids)
-    fold_patient_splits = np.array_split(patient_ids, folds)
+    # For smoke mode (single fold), use holdout split so train set is never empty.
+    if folds <= 1:
+        train_ds, val_ds, test_ds = split_by_patient(mimic3sample, [0.8, 0.1, 0.1], seed=45)
+        fold_splits = [(train_ds, val_ds, test_ds)]
+    else:
+        patient_ids = list(mimic3sample.patient_to_index.keys())
+        rng = np.random.default_rng(45)
+        rng.shuffle(patient_ids)
+        fold_patient_splits = np.array_split(patient_ids, folds)
 
-    for fold_idx in range(folds):
-        print(f'----------------------fold:{fold_idx + 1}/{folds}-----------------------')
+        fold_splits = []
+        for fold_idx in range(folds):
+            test_patients = set(fold_patient_splits[fold_idx].tolist())
+            train_pool_patients = [
+                p
+                for i, split in enumerate(fold_patient_splits)
+                if i != fold_idx
+                for p in split.tolist()
+            ]
+
+            # Keep at least one patient in the training split.
+            val_size = int(0.1 * len(train_pool_patients))
+            val_size = max(1, val_size)
+            val_size = min(val_size, max(0, len(train_pool_patients) - 1))
+
+            val_patients = set(train_pool_patients[:val_size])
+            train_patients = set(train_pool_patients[val_size:])
+
+            if len(train_patients) == 0 and len(val_patients) > 0:
+                moved = next(iter(val_patients))
+                val_patients.remove(moved)
+                train_patients.add(moved)
+
+            train_idx = list(chain.from_iterable(mimic3sample.patient_to_index[p] for p in train_patients))
+            val_idx = list(chain.from_iterable(mimic3sample.patient_to_index[p] for p in val_patients))
+            test_idx = list(chain.from_iterable(mimic3sample.patient_to_index[p] for p in test_patients))
+
+            fold_splits.append(
+                (
+                    torch.utils.data.Subset(mimic3sample, train_idx),
+                    torch.utils.data.Subset(mimic3sample, val_idx),
+                    torch.utils.data.Subset(mimic3sample, test_idx),
+                )
+            )
+
+    for fold_idx, (train_ds, val_ds, test_ds) in enumerate(fold_splits):
+        print(f'----------------------fold:{fold_idx + 1}/{len(fold_splits)}-----------------------')
 
         torch.manual_seed(45 + fold_idx)
         np.random.seed(45 + fold_idx)
         if torch.cuda.is_available():
             torch.cuda.manual_seed(45 + fold_idx)
 
-        test_patients = set(fold_patient_splits[fold_idx].tolist())
-        train_pool_patients = [p for i, split in enumerate(fold_patient_splits) if i != fold_idx for p in split.tolist()]
-        val_size = max(1, int(0.1 * len(train_pool_patients)))
-        val_patients = set(train_pool_patients[:val_size])
-        train_patients = set(train_pool_patients[val_size:])
-
-        train_idx = list(chain.from_iterable(mimic3sample.patient_to_index[p] for p in train_patients))
-        val_idx = list(chain.from_iterable(mimic3sample.patient_to_index[p] for p in val_patients))
-        test_idx = list(chain.from_iterable(mimic3sample.patient_to_index[p] for p in test_patients))
-
-        train_ds = torch.utils.data.Subset(mimic3sample, train_idx)
-        val_ds = torch.utils.data.Subset(mimic3sample, val_idx)
-        test_ds = torch.utils.data.Subset(mimic3sample, test_idx)
         train_loader = get_dataloader(train_ds, batch_size=252, shuffle=True)
         val_loader = get_dataloader(val_ds, batch_size=252, shuffle=False)
         test_loader = get_dataloader(test_ds, batch_size=252, shuffle=False)

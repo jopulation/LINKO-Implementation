@@ -483,7 +483,11 @@ def customized_set_task_mimic3(
         path = '_ccs'
     else:
         path = ''
-    path = path + f'_{ds_size_ratio}'
+
+    # Keep dev/full sample caches separate so a prior smoke run does not
+    # accidentally override full-scale training data.
+    dev_tag = 'dev' if os.getenv('MIMIC_DEV', '0') == '1' else 'full'
+    path = path + f'_{ds_size_ratio}_{dev_tag}'
 
     mimic3_samples_dir = os.path.join(SAVED_FILES_DIR, 'mimic3_samples')
     os.makedirs(mimic3_samples_dir, exist_ok=True)
