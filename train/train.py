@@ -6,10 +6,12 @@ import numpy as np
 from pyhealth.datasets import MIMIC3Dataset
 from utils.eval_test import evaluate, get_group_labels1, calculate_confidence_interval
 import os
+from pathlib import Path
 from utils.data import customized_set_task_mimic3
 import random
 from pyhealth.datasets import split_by_patient, get_dataloader
 from multiprocessing import freeze_support
+from itertools import chain
 
 
 def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, record_results=True):
@@ -20,9 +22,9 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
     data = mimic3sample.samples
     co_occurrence_counts, groups1 = get_group_labels1(data)
 
-    seeds = [123, 321, 54, 65, 367]
-    if os.getenv("SMOKE_SEEDS", "0") == "1":
-        seeds = seeds[:1]
+    folds = int(os.getenv("FOLDS", "5"))
+    if os.getenv("SMOKE_FOLDS", "0") == "1":
+        folds = 1
 
 
     list_top_k = [3,5,7,10, 15, 20, 30]
@@ -41,18 +43,32 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
             metrics_dict[f'Group_hit_at_k={k}@' + group_name] = []
 
 
-    for seed in seeds:
-        print(f'----------------------seed:{seed}-----------------------')
+    patient_ids = list(mimic3sample.patient_to_index.keys())
+    rng = np.random.default_rng(45)
+    rng.shuffle(patient_ids)
+    fold_patient_splits = np.array_split(patient_ids, folds)
 
-        torch.manual_seed(seed)
-        np.random.seed(seed)
-        #random.seed(seed)
-        # Set seed for CUDA operations
+    for fold_idx in range(folds):
+        print(f'----------------------fold:{fold_idx + 1}/{folds}-----------------------')
+
+        torch.manual_seed(45 + fold_idx)
+        np.random.seed(45 + fold_idx)
         if torch.cuda.is_available():
-            torch.cuda.manual_seed(seed)
+            torch.cuda.manual_seed(45 + fold_idx)
 
-        train_ratio, val_ratio, test_ratio = 0.8,0.1,0.1
-        train_ds, val_ds, test_ds = split_by_patient(mimic3sample, [train_ratio, val_ratio, test_ratio], seed=seed)
+        test_patients = set(fold_patient_splits[fold_idx].tolist())
+        train_pool_patients = [p for i, split in enumerate(fold_patient_splits) if i != fold_idx for p in split.tolist()]
+        val_size = max(1, int(0.1 * len(train_pool_patients)))
+        val_patients = set(train_pool_patients[:val_size])
+        train_patients = set(train_pool_patients[val_size:])
+
+        train_idx = list(chain.from_iterable(mimic3sample.patient_to_index[p] for p in train_patients))
+        val_idx = list(chain.from_iterable(mimic3sample.patient_to_index[p] for p in val_patients))
+        test_idx = list(chain.from_iterable(mimic3sample.patient_to_index[p] for p in test_patients))
+
+        train_ds = torch.utils.data.Subset(mimic3sample, train_idx)
+        val_ds = torch.utils.data.Subset(mimic3sample, val_idx)
+        test_ds = torch.utils.data.Subset(mimic3sample, test_idx)
         train_loader = get_dataloader(train_ds, batch_size=252, shuffle=True)
         val_loader = get_dataloader(val_ds, batch_size=252, shuffle=False)
         test_loader = get_dataloader(test_ds, batch_size=252, shuffle=False)
@@ -82,12 +98,12 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
             feature_keys=["conditions", "drugs", "procedures"],
             label_key="label",
             mode="multilabel",
-            embedding_dim=128,dropout=0.5,nheads=1,nlayers=1,
+            embedding_dim=256,dropout=0.5,nheads=1,nlayers=1,
             G_dropout=0.1,n_G_heads=4,n_G_layers=1,
             threshold3=0.00, threshold2=0.02, threshold1=0.00,
             n_hap_layers=1, n_hap_heads=2, hap_dropout=0.2,
             llm_model='llama3.1:latest', gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/', #gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/' => so far best results
-            ds_size_ratio=ds_size_ratio_model,device=device, seed=seed,
+            ds_size_ratio=ds_size_ratio_model,device=device, seed=45 + fold_idx,
         )
         model.to(device)
 
@@ -100,7 +116,7 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
 
         # Stage 4: model training
 
-        exp_path = f"./output/OntoFAR_{ds_size_ratio}/EXP_seed_{seed}"
+        exp_path = f"./output/OntoFAR_{ds_size_ratio}/EXP_fold_{fold_idx + 1}"
         resume_training = os.getenv("RESUME_TRAINING", "0") == "1"
         resume_ckpt = os.getenv("RESUME_CKPT", "").strip()
         checkpoint_path = None
@@ -112,16 +128,16 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
                 if os.path.isfile(candidate_last):
                     checkpoint_path = candidate_last
             if checkpoint_path is None:
-                print(f"Resume requested for seed {seed}, but no checkpoint was found. Starting fresh.")
+                print(f"Resume requested for fold {fold_idx + 1}, but no checkpoint was found. Starting fresh.")
             else:
-                print(f"Resuming seed {seed} from checkpoint: {checkpoint_path}")
+                print(f"Resuming fold {fold_idx + 1} from checkpoint: {checkpoint_path}")
 
         trainer = Trainer(model=model,
                           checkpoint_path=checkpoint_path,
                           metrics = ['roc_auc_samples', 'pr_auc_samples', 'f1_samples'],
                           enable_logging=True,
                           output_path=f"./output/OntoFAR_{ds_size_ratio}",
-                          exp_name=f'EXP_seed_{seed}',
+                          exp_name=f'EXP_fold_{fold_idx + 1}',
                           device=device)
 
         trainer.train(
@@ -325,26 +341,31 @@ def nfold_experiment(mimic3sample, epochs , ds_size_ratio, print_results=True, r
 def main():
     freeze_support()
 
+    project_root = Path(__file__).resolve().parents[1]
+    mimic3_root = os.getenv("MIMIC3_ROOT", str(project_root / "datasets" / "MIMIC_III"))
+    print(f"[DATA] Using MIMIC-III root: {mimic3_root}")
+
     mimic3_ds = MIMIC3Dataset(
-        root="datasets/MIMIC_III/",
+        root=mimic3_root,
         tables=["DIAGNOSES_ICD", "PROCEDURES_ICD", "PRESCRIPTIONS"],
-        # map all NDC codes to ATC 3-rd level codes in these tables
-        code_mapping={
-            "NDC": ("ATC", {"target_kwargs": {"level": 4}})},
+        code_mapping={"NDC": ("ATC", {"target_kwargs": {"level": 4}})},
         dev=os.getenv("MIMIC_DEV", "0") == "1",
     )
     print('--mimic-III loaded.')
-    mimic3sample = customized_set_task_mimic3(dataset=mimic3_ds,
-                                              task_fn=sequential_diagnosis_prediction_mimic3,
-                                              ccs_label=False,
-                                              ds_size_ratio=1.0,
-                                              seed=45)
+
+    mimic3sample = customized_set_task_mimic3(
+        dataset=mimic3_ds,
+        task_fn=sequential_diagnosis_prediction_mimic3,
+        ccs_label=False,
+        ds_size_ratio=1.0,
+        seed=45,
+    )
     print('--datasets created.')
     print(mimic3sample.stat())
+
     epochs = int(os.getenv("EPOCHS", "230"))
     nfold_experiment(mimic3sample, epochs=epochs, ds_size_ratio=1.0)
 
 
 if __name__ == "__main__":
     main()
-

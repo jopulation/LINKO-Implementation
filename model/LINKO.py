@@ -27,10 +27,10 @@ import random
 
 class Mega(BaseModel):
     def __init__(self, dataset: List[BaseEHRDataset], train_dataset: List[BaseEHRDataset], feature_keys: List[str], label_key: str, mode: str,
-                 embedding_dim=128, dropout = 0.5, nheads=1, nlayers=1,
-                 G_dropout = 0.5, n_G_heads=1, n_G_layers=1,threshold3=0.00, threshold2=0.02, threshold1=0.12,
-                 llm_model = 'llama3.1:latest', gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/',
-                 n_hap_layers=1, n_hap_heads=1, hap_dropout = 0.5,
+                 embedding_dim=256, dropout=0.5, nheads=1, nlayers=1,
+                 G_dropout=0.1, n_G_heads=4, n_G_layers=1, threshold3=0.00, threshold2=0.02, threshold1=0.12,
+                 llm_model='llama3.1:latest', gpt_embd_path='saved_files/gpt_code_emb/tx-emb-3-small/',
+                 n_hap_layers=1, n_hap_heads=2, hap_dropout=0.2,
                  ds_size_ratio='', device='cuda', seed=None, **kwargs):
         super().__init__(dataset, feature_keys, label_key, mode)
 
@@ -1127,6 +1127,9 @@ class Mega(BaseModel):
 
     def forward(self, **kwargs) -> Dict[str, torch.Tensor]:
         patient_emb = []
+        new_embeddings = self.Onto_GAT()
+        new_embeddings = self.bottom_up_hap(new_embeddings)
+        G = self._gram(new_embeddings)
         for feature_key in self.feature_keys:
 
             input_info = self.dataset.input_info[feature_key]
@@ -1142,9 +1145,6 @@ class Mega(BaseModel):
             input = torch.tensor(input, dtype=torch.long, device=self.device1)
 
             # (patient, visit, event, embedding_dim)
-            new_embeddings = self.Onto_GAT()
-            new_embeddings = self.bottom_up_hap(new_embeddings)
-            G = self._gram(new_embeddings)
             x = self.CustomEmbeddingLookup(G[feature_key], input)
 
             # (patient, visit, embedding_dim)
