@@ -1,510 +1,339 @@
-# LINKO (Demo/Subset Implementation)
+# LINKO Implementation (Linux-First Repro Guide)
 
-다음 연구를 구현한 레포지토리입니다.
+이 저장소는 다음 연구 아이디어를 코드로 구현한 프로젝트입니다.
 
-**Multi-Ontology Integration with Dual-Axis Propagation for Medical Concept Representation**
+Multi-Ontology Integration with Dual-Axis Propagation for Medical Concept Representation
 
-이 저장소는 LINKO 모델을 MIMIC-III 기반 데모/축소 환경에서 실행하고,
-전처리-학습-평가-시각화 파이프라인이 실제로 동작하는지 검증하는 구현입니다.
+문서 목적:
 
----
-
-## 1. Project Overview
-
-LINKO는 환자 방문 이력을 단순 시계열로만 다루지 않고,
-의료 온톨로지 구조와 코드 co-occurrence 관계를 함께 활용해 진단 예측 성능을 높이는 모델입니다.
-
-핵심 아이디어는 다음과 같습니다.
-
-- 진단, 처치, 약물 코드를 각각 온톨로지 레벨(`l1`, `l2`, `l3`)로 구성합니다.
-- 레벨별 코드 임베딩을 만들고, 코드 간 관계를 그래프 전파로 반영합니다.
-- 하이퍼그래프와 계층 전파를 결합해 레벨 간 정보를 통합합니다.
-- 환자 방문 시퀀스를 Transformer로 인코딩해 다음 진단을 예측합니다.
-- 다중 라벨 분류 기준으로 진단 코드 확률을 출력합니다.
+- Linux 환경에서 바로 재현 가능한 실행 절차 제공
+- 현재 워크스페이스에서 생성된 학습 결과 정리
+- 첨부된 논문 표(Table 2, 3, 4)와 실제 결과를 항목별로 상세 비교
 
 ---
 
-## 2. 논문 방식이 코드에서 어떻게 쓰이는지
+## 1) 저장소 구성
 
-아래는 논문의 핵심 아이디어가 실제 코드에서 구현되는 위치입니다.
-
-### 2.1 온톨로지 기반 코드 표현
-
-- 진단(`conditions`), 약물(`drugs`), 처치(`procedures`)를 레벨별로 분해합니다.
-- 레벨별 토크나이저와 임베딩을 초기화해 계층 정보를 표현합니다.
-
-관련 파일:
-
-```text
-model/LINKO.py
-```
-
-핵심 함수:
-
-- `_ontology_tables()`
-- `_my_add_feature_transform_layer()`
-- `_token_id_ontology_tables()`
-
-### 2.2 코드 관계 그래프 전파
-
-- 방문 단위 co-occurrence으로 조건부 확률 행렬을 만들고,
-- GAT/Hypergraph 전파를 통해 코드 표현을 업데이트합니다.
-
-관련 파일:
-
-```text
-model/LINKO.py
-saved_files/conditional_prob_matrix.csv
-saved_files/conditional_prob_matrix1.csv
-saved_files/conditional_prob_matrix2.csv
-```
-
-핵심 함수:
-
-- `get_co_occurrence()`
-- `get_co_occurrence_for_parents()`
-- `get_hyper_edges()`
-- `Onto_GAT()`
-
-### 2.3 이중 축 결합과 최종 예측
-
-- 계층 축: `bottom_up_hap()`으로 레벨 간 부모-자식 정보를 결합합니다.
-- 관계 축: `_gram()`에서 attention으로 레벨 표현을 통합합니다.
-- 환자 축: `forward()`에서 방문 시퀀스를 Transformer로 인코딩하고 FC로 예측합니다.
-
-관련 파일:
-
-```text
-model/LINKO.py
-```
-
-핵심 함수:
-
-- `bottom_up_hap()`
-- `_gram()`
-- `forward()`
-
-### 2.4 LLM 임베딩 보강
-
-- 코드 설명 텍스트를 기반으로 임베딩을 생성하고,
-- 실패 시 로컬 벡터화로 폴백해 학습 파이프라인 중단을 방지합니다.
-
-관련 파일:
-
-```text
-model/LINKO.py
-saved_files/gpt_code_emb/
-```
-
-핵심 함수:
-
-- `_get_llm_emb()`
-- `_get_gpt_embedding()`
-- `creat_llm_emb()`
+- model/LINKO.py: LINKO 핵심 모델
+- train/train.py: 학습 엔트리 (5-fold 실험)
+- utils/eval_test.py: AUPRC/ROC/F1/Acc@k/Hit@k 계산
+- results_prompting/: 결과 요약 텍스트, JSON, 시각화
+- output/OntoFAR_1.0/EXP_fold_*/: fold별 체크포인트와 로그
 
 ---
 
-## 3. Project Structure
+## 2) Linux 환경 준비
 
-```text
-LINKO-Implementation/
-├─ model/
-│  └─ LINKO.py
-├─ train/
-│  └─ train.py
-├─ tasks/
-│  └─ diagnosis_prediction.py
-├─ utils/
-│  ├─ data.py
-│  ├─ eval_test.py
-│  ├─ splitter.py
-│  └─ visualize_results.py
-├─ saved_files/
-│  ├─ icd_maping/
-│  ├─ ontology_tables/
-│  ├─ mimic3_samples/
-│  ├─ gpt_code_emb/
-│  └─ conditional_prob_matrix*.csv
-├─ results_prompting/
-│  ├─ metrics_results_BestModel_OntoFAR_1.0.txt
-│  ├─ metrics_results_BestModel_OntoFAR_1.0_summary.json
-│  └─ metrics_results_BestModel_OntoFAR_1.0_summary.png
-└─ README.md
-```
+권장 OS: Ubuntu 22.04+
 
-설명:
-
-- `model/`: LINKO 핵심 모델 구현
-- `train/`: 학습 엔트리 포인트
-- `tasks/`: MIMIC 진단 예측 태스크 샘플 구성
-- `utils/`: 데이터 전처리/평가/시각화 보조 코드
-- `saved_files/`: 매핑/캐시/임베딩/확률행렬 저장
-- `results_prompting/`: 학습 결과 요약 산출물 저장
-
----
-
-## 4. Environment Setup
-
-### 4.1 가상환경 생성
-
-Linux/macOS:
+### 2.1 Python 가상환경
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-```
-
-Windows PowerShell:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-```
-
-### 4.2 패키지 설치
-
-```bash
 pip install -r requirements.txt
 ```
 
-### 4.3 Ollama 실행
-
-터미널 1:
+### 2.2 GPU 확인 (선택)
 
 ```bash
-ollama serve
+nvidia-smi
+python -c "import torch; print(torch.cuda.is_available())"
 ```
 
-터미널 2:
+참고:
 
-```bash
-ollama run llama3.1
-```
+- train/train.py는 기본값이 USE_GPU=1 입니다.
+- CUDA가 없으면 USE_GPU=0 을 명시해야 합니다.
 
 ---
 
-## 5. Data Preparation
+## 3) 데이터 배치
 
-원본 MIMIC-III 파일은 아래 경로에 배치합니다.
+기본 경로:
 
-```text
 datasets/MIMIC_III/
-```
 
-학습 스크립트는 아래 테이블을 사용합니다.
+필수 테이블(코드상 사용):
 
-- `DIAGNOSES_ICD`
-- `PROCEDURES_ICD`
-- `PRESCRIPTIONS`
+- DIAGNOSES_ICD.csv
+- PROCEDURES_ICD.csv
+- PRESCRIPTIONS.csv
+- PATIENTS.csv
+- ADMISSIONS.csv
 
-데이터셋 구성 및 태스크 변환 관련 파일:
-
-```text
-utils/data.py
-tasks/diagnosis_prediction.py
-```
+다른 경로를 쓰려면 실행 시 MIMIC3_ROOT 환경변수로 지정합니다.
 
 ---
 
-## 6. Training
+## 4) 학습 실행 (Linux 기준)
 
-### 6.1 빠른 동작 확인 (권장)
-
-Linux/macOS:
+### 4.1 스모크 테스트 (1 fold, 빠른 점검)
 
 ```bash
 export PYTHONPATH=.
+export MIMIC3_ROOT=./datasets/MIMIC_III
 export MIMIC_DEV=1
-export EPOCHS=1
-export SMOKE_SEEDS=1
+export FOLDS=1
+export SMOKE_FOLDS=1
+export EPOCHS=3
+export USE_GPU=0
 python train/train.py
 ```
 
-Windows PowerShell:
-
-```powershell
-$env:PYTHONPATH='.'
-$env:MIMIC_DEV='1'
-$env:EPOCHS='1'
-$env:SMOKE_SEEDS='1'
-$env:USE_GPU='0'
-$env:RESUME_TRAINING='0'
-$env:LINKO_SKIP_OLLAMA='1'
-.\.venv\Scripts\python.exe -u train\train.py
-```
-
-### 6.2 전체 학습
-
-```powershell
-$env:PYTHONPATH='.'
-$env:MIMIC_DEV='0'
-$env:EPOCHS='230'
-$env:USE_GPU='1'
-$env:RESUME_TRAINING='1'
-Remove-Item Env:SMOKE_SEEDS -ErrorAction SilentlyContinue
-Remove-Item Env:LINKO_SKIP_OLLAMA -ErrorAction SilentlyContinue
-.\.venv\Scripts\python.exe -u train\train.py
-```
-
-결과 저장:
-
-- 체크포인트: `output/OntoFAR_1.0/EXP_seed_<seed>/`
-- 지표 요약: `results_prompting/`
-
-### 6.3 GPU/이어학습 관련 환경변수
-
-- `USE_GPU='1'`: CUDA GPU 강제 사용. CUDA가 없으면 학습 시작 전에 에러로 중단됩니다.
-- `RESUME_TRAINING='1'`: seed별 `output/OntoFAR_1.0/EXP_seed_<seed>/last.ckpt`에서 이어학습을 시도합니다.
-- `RESUME_CKPT='<path>'`: 특정 체크포인트를 직접 지정해 이어학습합니다.
-- `LINKO_SKIP_OLLAMA='1'`: Ollama 호출을 건너뛰고 fallback 임베딩 경로를 사용합니다.
-
-GPU 인식 확인:
-
-```powershell
-.\.venv\Scripts\python.exe -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'no cuda')"
-```
-
-이어학습 체크포인트 확인:
-
-```powershell
-Get-ChildItem .\output\OntoFAR_1.0\EXP_seed_*\last.ckpt
-```
-
----
-
-## 7. 시각화 전에 파이프라인이 어떻게 작동하는지
-
-이 섹션은 시각화 이전 단계에서 내부가 어떻게 동작하는지 설명합니다.
-
-### 7.1 데이터 로드 및 샘플 생성
-
-1. `MIMIC3Dataset` 로 원본 테이블을 로드합니다.
-2. `customized_set_task_mimic3()` 로 환자 방문 시퀀스를 태스크 입력 형식으로 변환합니다.
-3. seed 기준으로 train/val/test를 분할합니다.
-
-관련 파일:
-
-```text
-train/train.py
-utils/data.py
-tasks/diagnosis_prediction.py
-```
-
-### 7.2 모델 초기화
-
-1. 온톨로지 테이블과 레벨 토크나이저를 구성합니다.
-2. co-occurrence 행렬을 로드하거나 생성합니다.
-3. LLM 임베딩을 로드하거나 생성합니다.
-4. GAT/Hypergraph/Transformer/FC 모듈을 초기화합니다.
-
-관련 파일:
-
-```text
-model/LINKO.py
-```
-
-### 7.3 학습 루프
-
-1. 배치 단위로 `forward()`를 호출합니다.
-2. 모델은 코드 관계 전파와 시퀀스 인코딩을 수행합니다.
-3. loss를 계산하고 optimizer로 업데이트합니다.
-4. 검증 지표를 기준으로 best checkpoint를 갱신합니다.
-
-관련 파일:
-
-```text
-train/train.py
-model/LINKO.py
-```
-
-### 7.4 평가 및 결과 파일 생성
-
-1. 검증/테스트 추론 결과로 metric을 계산합니다.
-2. 평균 metric을 텍스트로 저장합니다.
-3. 시각화 스크립트가 읽을 JSON/PNG를 생성합니다.
-
-관련 파일:
-
-```text
-utils/eval_test.py
-utils/visualize_results.py
-results_prompting/metrics_results_BestModel_OntoFAR_1.0.txt
-```
-
----
-
-## 8. Visualization
-
-README 설명과 연결되는 시각화 이미지는 아래 3개입니다.
-
-```text
-results_prompting/linko_pipeline_overview.png
-results_prompting/linko_method_overview.png
-results_prompting/metrics_results_BestModel_OntoFAR_1.0_summary.png
-```
-
-### 8.1 파이프라인 개요
-
-![LINKO Pipeline](results_prompting/linko_pipeline_overview.png)
-
-- 데이터 로드에서 예측 헤드까지 전체 흐름을 한 장으로 확인할 수 있습니다.
-- 전처리, 온톨로지 구성, 그래프 전파, 시퀀스 인코딩의 연결 관계를 보여줍니다.
-
-### 8.2 논문 방식 적용 구조
-
-![LINKO Method](results_prompting/linko_method_overview.png)
-
-- 온톨로지 토큰화, 공기출현/하이퍼엣지, LLM 임베딩, 계층 결합, 최종 예측의 순서를 시각화합니다.
-- 논문 아이디어가 코드 블록으로 어떻게 배치되는지 이해할 때 유용합니다.
-
-### 8.3 성능 요약 지표
-
-![LINKO Metrics](results_prompting/metrics_results_BestModel_OntoFAR_1.0_summary.png)
-
-- 왼쪽 그래프: `pr_auc_samples`, `roc_auc_samples`, `f1_samples` 평균 비교
-- 오른쪽 그래프: `acc_at_k`, `hit_at_k`를 `k`별로 비교
-
-결과 해석:
-
-- 코어 지표에서는 `roc_auc_samples`가 약 `0.524`로 가장 높고, `pr_auc_samples`는 약 `0.203`, `f1_samples`는 약 `0.149` 수준입니다.
-- 이 패턴은 클래스 불균형이 있는 환경에서 임계값 기반 분류 성능(`F1`)이 아직 제한적일 수 있음을 시사합니다.
-- `acc_at_k`는 `k=3`에서 약 `0.508`로 시작해 `k`가 커질수록 완만하게 감소하는 경향을 보입니다. 이는 `k` 증가에 따라 분모가 함께 커지는 지표 특성으로 해석할 수 있습니다.
-- `hit_at_k`는 상위 후보 안에 정답이 포함되는지 보는 지표이므로, 본 결과에서는 상위 후보군 포착 자체는 비교적 안정적인 편입니다.
-- 다만 seed 간 신뢰구간(CI)이 일부 지표에서 넓게 나타나므로, 현재 수치는 절대 성능 확정보다 파이프라인 동작 검증 관점에서 해석하는 것이 안전합니다.
-
-### 8.4 시각화 생성 방법
-
-아래 명령은 README에 필요한 시각화 파일을 한 번에 생성합니다.
+### 4.2 논문 재현에 가까운 실행 (5 fold)
 
 ```bash
-python utils/generate_readme_visuals.py --input results_prompting/metrics_results_BestModel_OntoFAR_1.0.txt --output-dir results_prompting
+export PYTHONPATH=.
+export MIMIC3_ROOT=./datasets/MIMIC_III
+export MIMIC_DEV=0
+export FOLDS=5
+export SMOKE_FOLDS=0
+export EPOCHS=230
+export USE_GPU=1
+python train/train.py
 ```
 
-기존 요약 지표 시각화만 다시 만들고 싶다면 아래를 사용합니다.
+### 4.3 학습 재개
 
 ```bash
-python utils/visualize_results.py --input results_prompting/metrics_results_BestModel_OntoFAR_1.0.txt --output-dir results_prompting
+export RESUME_TRAINING=1
+python train/train.py
 ```
 
-### 8.5 LLM 임베딩 구조 시각화
-
-#### 임베딩 파일 저장 위치
-
-로컬 LLM(Ollama)으로 생성된 의료 코드 임베딩 벡터는 NumPy 바이너리 형식(`.npy`)으로 저장됩니다.
-
-**저장 경로:**
-
-```
-saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/
-```
-
-**파일 목록 (9개):**
-
-| 파일명            | 설명                      | 코드 개수 | 임베딩 차원 |
-| ----------------- | ------------------------- | --------- | ----------- |
-| `dx1_gpt_emb.npy` | 진단 코드 레벨 1 (최상위) | 3         | 128         |
-| `dx2_gpt_emb.npy` | 진단 코드 레벨 2 (중간)   | 20        | 128         |
-| `dx3_gpt_emb.npy` | 진단 코드 레벨 3 (세부)   | 163       | 128         |
-| `rx1_gpt_emb.npy` | 약물 코드 레벨 1 (최상위) | 14        | 128         |
-| `rx2_gpt_emb.npy` | 약물 코드 레벨 2 (중간)   | 62        | 128         |
-| `rx3_gpt_emb.npy` | 약물 코드 레벨 3 (세부)   | 111       | 128         |
-| `px1_gpt_emb.npy` | 시술 코드 레벨 1 (최상위) | 1         | 128         |
-| `px2_gpt_emb.npy` | 시술 코드 레벨 2 (중간)   | 7         | 128         |
-| `px3_gpt_emb.npy` | 시술 코드 레벨 3 (세부)   | 41        | 128         |
-
-#### 3-레벨 계층 구조의 의미
-
-의료 코드 표준(ICD-9, ATC 등)은 자연스럽게 3단계 계층 구조를 가집니다:
-
-- **L1 (최상위)**: 일반적 개념. 예: ICD-9 001-139 (감염성 질환)
-- **L2 (중간)**: 더 구체적 범주. 예: ICD-9 050-052 (두창 관련)
-- **L3 (세부)**: 임상에서 실제 사용하는 코드. 예: ICD-9 050.9 (두창 상세분류)
-
-이 3단계를 **계층 전파**(`bottom_up_hap()`)로 결합하면:
-
-- 세부 진단 관계 학습 (L3)
-- 중간 범주 관계 (L2)
-- 광범위 개념 정보 (L1)
-
-레벨별 정보 손실 없이 **다양한 스케일의 의료 개념 관계**를 학습할 수 있습니다.
-
-#### 임베딩 확인 및 시각화
-
-아래 명령으로 모든 임베딩 파일의 PCA 2D 시각화를 생성합니다:
+특정 체크포인트에서 시작하려면:
 
 ```bash
-python visualize_embeddings.py
-```
-
-생성된 이미지:
-
-```
-results_prompting/embeddings_visualization.png
-```
-
-![LLM Embeddings Visualization](results_prompting/embeddings_visualization.png)
-
-**시각화 해석:**
-
-- **각 서브플롯**: 진단(DX), 약물(RX), 시술(PX)별로 3 row × 3 column 배치
-- **데이터 포인트**: 각 의료 코드를 PCA로 2D로 축소한 것
-- **색상**: 코드 인덱스 표현 (진한 파란색 = 낮은 인덱스, 황색 = 높은 인덱스)
-- **PC1, PC2**: 각 주성분이 설명하는 분산 비율 표시 (보통 50~60%)
-
-**주요 특징:**
-
-- **L3 임베딩 (dx3, rx3, px3)**: 가장 많은 코드를 보유해 밀집된 군집 형태
-- **L1 임베딩 (dx1, px1)**: 코드 개수가 적어서 희소한 분포
-- **L2 임베딩**: L1과 L3 사이의 중간 밀도
-
-#### Python에서 직접 확인
-
-```python
-import numpy as np
-
-# 임베딩 로드
-dx1_emb = np.load('saved_files/gpt_code_emb/tx-emb-3-small/include_all_parents2/dx1_gpt_emb.npy')
-
-# 기본 정보
-print(f"Shape: {dx1_emb.shape}")           # (3, 128)
-print(f"Data Type: {dx1_emb.dtype}")       # float32
-print(f"Min: {dx1_emb.min():.4f}, Max: {dx1_emb.max():.4f}")
-print(f"Mean: {dx1_emb.mean():.4f}, Std: {dx1_emb.std():.4f}")
-
-# 샘플 벡터
-print(dx1_emb[0])  # 첫 번째 코드의 임베딩
+export RESUME_TRAINING=1
+export RESUME_CKPT=./output/OntoFAR_1.0/EXP_fold_1/last.ckpt
+python train/train.py
 ```
 
 ---
 
-## 9. Metric 설명
+## 5) 결과 파일 위치
 
-- `Recall@k` 계열: 상위 예측 목록에 정답 진단이 포함되는 비율
-- `nDCG@k` 계열: 정답이 상위 순위에 배치되는 정도를 반영
-- `PR-AUC`: 양성 클래스 희소 상황에서 정밀도-재현율 균형을 평가
-- `ROC-AUC`: 임계값 전반에서 분류 성능을 평가
-- `F1`: 정밀도와 재현율의 조화 평균
+학습 완료 후 주로 확인할 파일:
+
+- output/OntoFAR_1.0/EXP_fold_1/log.txt
+- output/OntoFAR_1.0/EXP_fold_2/log.txt
+- output/OntoFAR_1.0/EXP_fold_3/log.txt
+- output/OntoFAR_1.0/EXP_fold_4/log.txt
+- output/OntoFAR_1.0/EXP_fold_5/log.txt
+- results_prompting/metrics_results_BestModel_OntoFAR_1.0.txt
+- results_prompting/metrics_results_BestModel_OntoFAR_1.0_summary.json
+
+시각화:
+
+```bash
+python utils/generate_readme_visuals.py \
+  --input results_prompting/metrics_results_BestModel_OntoFAR_1.0.txt \
+  --output-dir results_prompting
+```
 
 ---
 
-## 10. Limitations
+## 6) 이번 워크스페이스에서 확인된 학습 결과
 
-- full-scale MIMIC 재현이 아닌 demo/subset 실행 안정화 목적 구현입니다.
-- 데이터 크기가 작으면 metric 변동성이 커질 수 있습니다.
-- 논문 수치와 절대값 비교보다는 파이프라인 동작 검증에 초점을 두는 것이 적절합니다.
+기준 파일:
+
+- results_prompting/metrics_results_BestModel_OntoFAR_1.0.txt
+
+핵심 지표(평균, 95% CI):
+
+| 지표 | 평균 | 95% CI |
+|---|---:|---:|
+| AUPRC | 27.49 | ±2.83 |
+| ROC-AUC | 92.88 | ±0.16 |
+| F1 | 24.23 | ±5.10 |
+| Acc@20 | 36.99 | ±3.36 |
+| Acc@30 | 42.15 | ±3.18 |
+
+라벨 빈도 구간별 AUPRC:
+
+| 라벨 빈도 구간 | AUPRC 평균 | 95% CI |
+|---|---:|---:|
+| 0-25% | 25.99 | ±2.75 |
+| 25-50% | 59.97 | ±2.10 |
+| 50-75% | 70.28 | ±4.19 |
+| 75-100% | 43.10 | ±4.31 |
+
+추가 관찰:
+
+- k가 커질수록 Hit@k는 0.85 -> 0.98 수준으로 증가
+- Acc@k는 k=3에서 높고 중간 k에서 낮아졌다가 k=30에서 다시 상승하는 패턴
 
 ---
 
-## 11. Conclusion
+## 7) 논문 대비 상세 비교 (Table 2, 3, 4 기반)
 
-이 프로젝트는 LINKO의 핵심 구조를 축소 환경에서 실행 가능하도록 구성하고,
-데이터 전처리부터 학습/평가/시각화까지 전체 파이프라인이 정상 동작함을 확인한 구현입니다.
+주의:
 
-핵심적으로 확인한 사항:
+- 논문 표 수치는 퍼센트 스케일로 표기되어 있어, 본 문서도 동일 스케일로 비교했습니다.
+- 아래 논문 값은 첨부된 표 이미지(Table 2, 3, 4)의 수치를 기준으로 정리했습니다.
 
-- 온톨로지 레벨 기반 코드 표현이 정상적으로 구성됨
-- 그래프 전파와 시퀀스 인코딩이 학습 루프에서 정상 동작함
-- 평가지표 계산 및 결과 시각화가 재현 가능하게 생성됨
-- 논문 구조 이해 및 실험 파이프라인 검증 용도로 적합함
+### 7.1 General Performance 비교 (핵심)
+
+| 지표 | 우리 실험 | 논문 MIMIC-III (LINKO w/ GAT) | 차이 (우리-논문, p) | 논문 MIMIC-IV (LINKO w/ GAT) | 차이 (우리-논문, p) |
+|---|---:|---:|---:|---:|---:|
+| AUPRC | 27.49 | 31.79 | -4.30 | 32.12 | -4.63 |
+| F1 | 24.23 | 28.66 | -4.43 | 28.56 | -4.33 |
+| Acc@20 | 36.99 | 41.84 | -4.85 | 43.56 | -6.57 |
+| Acc@30 | 42.15 | 46.96 | -4.81 | 48.12 | -5.97 |
+
+해석:
+
+- 전체적으로 논문 대비 약 4~7p 낮은 성능입니다.
+- 특히 Acc@20/30 갭이 AUPRC/F1보다 약간 더 큽니다.
+
+### 7.2 Label Category AUPRC 비교
+
+| 라벨 빈도 구간 | 우리 실험 AUPRC | 논문 MIMIC-III AUPRC (LINKO w/ GAT) | 차이 (우리-논문, p) |
+|---|---:|---:|---:|
+| 0-25% | 25.99 | 31.62 | -5.63 |
+| 25-50% | 59.97 | 55.68 | +4.29 |
+| 50-75% | 70.28 | 56.90 | +13.38 |
+| 75-100% | 43.10 | 80.76 | -37.66 |
+
+핵심 포인트:
+
+- 희귀 구간(0-25%)과 최다빈도 구간(75-100%)에서 특히 격차가 큽니다.
+- 중간 구간(25-75%)은 논문보다 높게 나왔습니다.
+- 이는 라벨 분포/분할 방식 차이, 혹은 평가 스크립트의 그룹 정의 차이 영향일 가능성이 큽니다.
+
+### 7.3 Prompting 전략 관점 (Table 3)
+
+논문 Table 3에서 가장 강한 설정으로 보이는 type-code-concept-parent-task는 다음과 같습니다.
+
+| 데이터셋 | AUPRC | F1 | Acc@20 | Acc@30 |
+|---|---:|---:|---:|---:|
+| MIMIC-III | 31.79 | 28.66 | 41.84 | 46.96 |
+| MIMIC-IV | 32.38 | 30.02 | 43.70 | 48.63 |
+
+우리 결과와 비교하면:
+
+- MIMIC-III 기준으로도 약 4~5p 낮음
+- MIMIC-IV 기준으로는 약 5~7p 낮음
+
+즉, 프롬프트/코드-개념 결합 이득을 포함한 논문 상위 설정까지 감안해도 현재 결과는 추가 개선 여지가 큽니다.
+
+### 7.4 Concept Type 조합 관점 (Table 4)
+
+논문 Table 4는 dx/rx/px 조합 및 multi-level integration 유무를 비교합니다.
+
+MIMIC-IV (논문 Table 4):
+
+| Concept Type | 설정 | AUPRC | F1 | Acc@15 | Acc@20 | Acc@30 |
+|---|---|---:|---:|---:|---:|---:|
+| rx,px | w/ Multi-level | 22.74 | 16.92 | 31.56 | 33.57 | 38.75 |
+| rx,px | w/o Multi-level | 21.35 | 15.15 | 30.03 | 32.21 | 37.23 |
+| dx,px | w/ Multi-level | 30.67 | 25.87 | 40.25 | 42.21 | 46.99 |
+| dx,px | w/o Multi-level | 29.28 | 22.49 | 38.62 | 40.68 | 45.56 |
+| dx,rx | w/ Multi-level | 30.86 | 25.34 | 40.44 | 42.53 | 47.31 |
+| dx,rx | w/o Multi-level | 30.17 | 25.08 | 39.77 | 41.71 | 46.59 |
+| dx,rx,px | w/ Multi-level | 32.38 | 30.02 | 42.05 | 43.70 | 48.63 |
+| dx,rx,px | w/o Multi-level | 30.10 | 25.26 | 39.67 | 41.50 | 46.25 |
+
+MIMIC-III (논문 Table 4):
+
+| Concept Type | 설정 | AUPRC | F1 | Acc@15 | Acc@20 | Acc@30 |
+|---|---|---:|---:|---:|---:|---:|
+| rx,px | w/ Multi-level | 24.24 | 18.29 | 31.92 | 34.43 | 39.87 |
+| rx,px | w/o Multi-level | 22.98 | 16.55 | 30.81 | 32.95 | 38.61 |
+| dx,px | w/ Multi-level | 30.19 | 26.40 | 38.03 | 40.18 | 46.03 |
+| dx,px | w/o Multi-level | 29.01 | 24.48 | 37.04 | 39.16 | 44.89 |
+| dx,rx | w/ Multi-level | 30.64 | 27.06 | 39.31 | 41.27 | 46.62 |
+| dx,rx | w/o Multi-level | 29.56 | 24.44 | 37.88 | 39.98 | 45.46 |
+| dx,rx,px | w/ Multi-level | 31.79 | 28.66 | 39.95 | 41.84 | 46.96 |
+| dx,rx,px | w/o Multi-level | 29.41 | 25.28 | 37.55 | 39.61 | 45.25 |
+
+우리 결과와 직접 비교 (dx,rx,px + Multi-level 기준):
+
+| 지표 | 우리 실험 | 논문 MIMIC-III (w/ Multi-level, dx+rx+px) | 차이 (우리-논문, p) | 논문 MIMIC-IV (w/ Multi-level, dx+rx+px) | 차이 (우리-논문, p) |
+|---|---:|---:|---:|---:|---:|
+| AUPRC | 27.49 | 31.79 | -4.30 | 32.38 | -4.89 |
+| F1 | 24.23 | 28.66 | -4.43 | 30.02 | -5.79 |
+| Acc@20 | 36.99 | 41.84 | -4.85 | 43.70 | -6.71 |
+| Acc@30 | 42.15 | 46.96 | -4.81 | 48.63 | -6.48 |
+
+핵심 해석:
+
+- 논문에서도 dx,rx,px를 모두 쓰고 multi-level을 적용한 경우가 각 데이터셋 최고 성능 구간입니다.
+- 우리 실험도 동일 구조를 지향하지만, 해당 최고 구간 대비 약 4~7p 낮습니다.
+- 따라서 현재 성능 갭은 모델 구조 자체보다 데이터셋 조건/평가 프로토콜/학습 안정화 차이의 영향이 더 클 가능성이 높습니다.
+
+---
+
+## 8) 왜 논문보다 낮게 나왔는가 (재현 관점 분석)
+
+가능한 원인(우선순위 순):
+
+1. 데이터셋 조건 불일치
+
+- 논문 전처리 버전, 코드 매핑 버전, 환자 필터 조건이 다르면 AUPRC/F1이 크게 변동
+
+2. 평가 분할 및 지표 계산 차이
+
+- train/train.py는 환자 단위 5-fold를 직접 구성
+- 라벨 그룹(0-25/25-50/50-75/75-100)은 누적 빈도 기반이라, 논문 그룹 기준과 다를 수 있음
+
+3. LLM 임베딩 생성 조건 차이
+
+- gpt_code_emb 생성 시 모델, 프롬프트, 실패 폴백 여부가 성능에 직접 영향
+
+4. 하이퍼파라미터/학습 안정성
+
+- 학습 로그상 epoch 진행 중 변동이 큼
+- fold별 편차가 존재해 평균과 CI에 영향
+
+5. 결과 요약 파일 불일치
+
+- TXT와 JSON의 수치가 다릅니다.
+- 본 문서는 fold 평균 및 CI가 포함된 TXT를 우선 신뢰 지표로 사용했습니다.
+
+---
+
+## 9) 재현 정확도 향상 체크리스트
+
+논문 수치에 더 가깝게 가려면 아래를 순서대로 점검하세요.
+
+1. 데이터셋 정합성
+
+- 논문과 동일한 MIMIC 버전/필터/코드 매핑 사용 확인
+
+2. 평가 파이프라인 정합성
+
+- 검증/테스트 split과 metric 정의(특히 Acc@k, 그룹 AUPRC) 재검증
+
+3. 임베딩 고정 및 캐시 재생성
+
+- saved_files/gpt_code_emb 하위 임베딩을 논문 설정과 동일하게 재생성
+
+4. 학습 설정 고정
+
+- seed, EPOCHS, FOLDS, USE_GPU, batch size, lr를 실험표와 동일하게 통일
+
+5. 결과 산출 스크립트 정리
+
+- TXT/JSON 생성 루틴을 하나로 통합해 값 불일치 제거
+
+---
+
+## 10) 빠른 실행 요약
+
+```bash
+source .venv/bin/activate
+export PYTHONPATH=.
+export MIMIC3_ROOT=./datasets/MIMIC_III
+export MIMIC_DEV=0
+export FOLDS=5
+export EPOCHS=230
+export USE_GPU=1
+python train/train.py
+```
+
+결과 확인:
+
+- results_prompting/metrics_results_BestModel_OntoFAR_1.0.txt
+- output/OntoFAR_1.0/EXP_fold_*/log.txt
